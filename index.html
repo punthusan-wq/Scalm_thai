@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ติดตามการจัดซื้อจัดจ้าง</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;font-size:14px;background:#F8FAFC;color:#1E293B;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:#1E293B;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#topbar h1{font-size:14px;font-weight:600;flex:1}
+#save-status{font-size:12px;color:#94A3B8;transition:color .3s;white-space:nowrap}
+#save-status.saving{color:#FCD34D}
+#save-status.saved{color:#6EE7B7}
+#save-status.error{color:#FCA5A5}
+/* TABS */
+#tabbar{display:flex;background:#fff;border-bottom:1px solid #E2E8F0;flex-shrink:0}
+.tab{padding:10px 20px;font-size:13px;font-weight:500;color:#64748B;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;user-select:none;transition:color .12s}
+.tab:hover{color:#334155;background:#F8FAFC}
+.tab.active{color:#2563EB;border-bottom-color:#2563EB}
+.tab-badge{background:#E2E8F0;color:#64748B;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:6px;font-weight:400}
+.tab.active .tab-badge{background:#DBEAFE;color:#2563EB}
+/* PAGE WRAPPERS */
+#page-list{display:flex;flex-direction:column;flex:1;overflow:hidden}
+#page-add{display:none;flex:1;overflow-y:auto;padding:24px}
+/* SEARCH ROW */
+#searchbar{padding:8px 12px;background:#fff;border-bottom:1px solid #E2E8F0;display:flex;gap:8px;align-items:center;flex-shrink:0}
+#search{flex:1;padding:7px 12px;border:1px solid #CBD5E1;border-radius:7px;font-size:13px;color:#1E293B}
+#search:focus{outline:none;border-color:#3B82F6;box-shadow:0 0 0 2px #BFDBFE}
+select.dsel{padding:6px 10px;border:1px solid #CBD5E1;border-radius:7px;font-size:12px;background:#fff;color:#475569}
+select.dsel:focus{outline:none;border-color:#3B82F6}
+#cnt{font-size:12px;color:#94A3B8;white-space:nowrap}
+/* STATUS FILTER */
+#statusbar{padding:6px 12px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.sbtn{padding:4px 12px;border:1px solid #E2E8F0;border-radius:20px;font-size:12px;cursor:pointer;color:#475569;background:#fff;white-space:nowrap;transition:all .1s}
+.sbtn:hover{border-color:#CBD5E1;background:#F8FAFC}
+.sbtn.active{background:#1E293B;color:#fff;border-color:#1E293B}
+.sbtn-cnt{font-size:10px;opacity:.7;margin-left:3px}
+/* MAIN SPLIT */
+#main{display:flex;flex:1;overflow:hidden}
+#lp{width:40%;border-right:1px solid #E2E8F0;overflow-y:auto;background:#fff}
+.pi{padding:10px 14px;border-bottom:1px solid #F1F5F9;cursor:pointer;display:flex;gap:10px;align-items:flex-start;transition:background .1s}
+.pi:hover{background:#F8FAFC}
+.pi.sel{background:#EFF6FF;border-left:3px solid #3B82F6}
+.pn{font-size:11px;color:#94A3B8;min-width:28px;padding-top:2px;flex-shrink:0}
+.pi-info{flex:1;min-width:0}
+.pi-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-sub{font-size:11px;color:#64748B;margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pi-step{font-size:11px;color:#64748B;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-bar{height:3px;background:#E2E8F0;border-radius:2px;margin-top:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width .3s}
+.pf-e{background:#3B82F6}.pf-p{background:#22C55E}.pf-ch{background:#F59E0B}
+/* DETAIL */
+#dp{flex:1;overflow-y:auto;padding:20px;background:#F8FAFC}
+#de{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94A3B8;gap:8px;text-align:center}
+#de .ic{font-size:48px;margin-bottom:4px}
+#pd{display:none}
+.dh{background:#fff;border-radius:10px;padding:16px;margin-bottom:12px;border:1px solid #E2E8F0}
+.dt{font-size:15px;font-weight:600;line-height:1.4;margin-bottom:8px}
+.dm{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#64748B}
+.dm b{color:#334155;font-weight:500}
+.ss{background:#fff;border-radius:10px;padding:16px;border:1px solid #E2E8F0;margin-bottom:10px}
+.ss-title{font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+/* STEP ROWS */
+.sr{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:1px solid #E2E8F0;cursor:pointer;transition:all .12s;margin-bottom:5px}
+.sr:hover{border-color:#93C5FD;background:#F0F9FF}
+.sr.done{background:#F0FDF4;border-color:#86EFAC;cursor:default}
+.sr.done:hover{background:#F0FDF4;border-color:#86EFAC}
+.sr.cur{border-color:#3B82F6;background:#EFF6FF;box-shadow:0 0 0 2px #BFDBFE}
+.sr.next-sug{border-color:#FDE68A;background:#FFFBEB}
+.sr.fut{opacity:.4}
+.sr.fut:hover{opacity:.7}
+.si{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:600}
+.si-done{background:#22C55E;color:#fff}
+.si-cur{background:#3B82F6;color:#fff}
+.si-sug{background:#F59E0B;color:#fff}
+.si-fut{background:#E2E8F0;color:#94A3B8}
+.sname{flex:1;font-size:13px;color:#334155}
+.sname.done{color:#15803D}
+.sug-tag{font-size:10px;background:#FDE68A;color:#92400E;border-radius:4px;padding:1px 6px;margin-left:4px;white-space:nowrap}
+/* DATE EDIT */
+.di{font-size:12px;border:1px solid #CBD5E1;border-radius:4px;padding:3px 6px;width:105px;text-align:center;color:#334155}
+.di:focus{outline:none;border-color:#3B82F6}
+.di.err{border-color:#EF4444;background:#FFF5F5}
+.di-err-tip{font-size:10px;color:#EF4444;display:none;margin-left:4px}
+/* BUTTONS */
+.btn-td{font-size:11px;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:4px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+.btn-td:hover{background:#DBEAFE}
+.btn-clr{font-size:11px;background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:4px}
+.ab{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #E2E8F0;align-items:center;flex-wrap:wrap}
+.btn{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:none;font-weight:500}
+.btn-p{background:#1E293B;color:#fff}.btn-p:hover{background:#334155}
+.btn-s{background:#fff;color:#475569;border:1px solid #CBD5E1}.btn-s:hover{background:#F8FAFC}
+.nb{width:100%;border:1px solid #E2E8F0;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;min-height:52px}
+.nb:focus{outline:none;border-color:#93C5FD}
+.sl{font-size:12px;font-weight:500;color:#64748B;margin-bottom:5px;display:block}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.b-done{background:#DCFCE7;color:#166534}
+.b-contract{background:#EDE9FE;color:#5B21B6}
+.b-announce{background:#D1FAE5;color:#065F46}
+.b-wait{background:#FEF9C3;color:#854D0E}
+.b-inprog{background:#EFF6FF;color:#1E40AF}
+.b-pause{background:#F1F5F9;color:#475569}
+.b-new{background:#F5F3FF;color:#5B21B6}
+/* ADD FORM */
+.add-wrap{max-width:600px;margin:0 auto}
+.add-card{background:#fff;border-radius:12px;border:1px solid #E2E8F0;overflow:hidden}
+.add-head{padding:16px 20px;border-bottom:1px solid #E2E8F0;background:#F8FAFC}
+.add-head h2{font-size:15px;font-weight:600;color:#0F172A}
+.add-head p{font-size:12px;color:#64748B;margin-top:4px}
+.add-body{padding:20px}
+.frow{margin-bottom:16px}
+.frow:last-child{margin-bottom:0}
+.frow label{display:block;font-size:12px;font-weight:500;color:#475569;margin-bottom:5px}
+.frow label .req{color:#EF4444;margin-left:2px}
+.finput{width:100%;padding:8px 11px;border:1px solid #CBD5E1;border-radius:7px;font-size:13px;font-family:inherit;color:#1E293B;background:#fff}
+.finput:focus{outline:none;border-color:#3B82F6;box-shadow:0 0 0 2px #BFDBFE}
+.finput.err{border-color:#EF4444;background:#FFF5F5}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ferr{font-size:12px;color:#EF4444;margin-top:4px;display:none}
+/* Step preview in add form */
+.sp-wrap{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:7px;padding:10px 12px;margin-top:8px;display:none}
+.sp-title{font-size:11px;font-weight:600;color:#64748B;margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px}
+.sp-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.sp-step{font-size:11px;color:#475569;padding:2px 0;display:flex;align-items:center;gap:5px}
+.sp-step::before{content:'';width:6px;height:6px;border-radius:50%;background:#CBD5E1;flex-shrink:0}
+/* Add form footer */
+.add-foot{padding:14px 20px;border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;background:#F8FAFC}
+.add-foot-note{font-size:12px;color:#94A3B8}
+.btn-green{background:#16A34A;color:#fff;padding:8px 20px;border-radius:7px;font-size:13px;font-weight:600;border:none;cursor:pointer}
+.btn-green:hover{background:#15803D}
+.btn-green:disabled{opacity:.5;cursor:not-allowed}
+/* Success banner */
+#add-success{display:none;background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#15803D;align-items:center;gap:10px}
+#add-success.show{display:flex}
+/* Budget hint */
+.budget-hint{font-size:11px;color:#94A3B8;margin-top:3px}
+/* Loading */
+#loading{position:fixed;inset:0;background:rgba(248,250,252,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:12px}
+.spin{width:32px;height:32px;border:3px solid #E2E8F0;border-top-color:#3B82F6;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-size:14px;color:#64748B}
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:200;white-space:nowrap}
+#toast.show{opacity:1}
+.lempty{padding:40px;text-align:center;color:#94A3B8;font-size:13px}
+/* Keyboard shortcut hint */
+.kbd{background:#E2E8F0;color:#475569;border-radius:3px;padding:1px 5px;font-size:10px;font-family:monospace}
+/* Help button */
+.btn-help{padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#E2E8F0;font-size:12px;cursor:pointer;white-space:nowrap}
+.btn-help:hover{background:rgba(255,255,255,.2);color:#fff}
+/* Help modal */
+#help-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:400;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+#help-overlay.show{display:flex}
+#help-modal{background:#fff;border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;margin:auto}
+.hm-head{padding:18px 22px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#fff;z-index:1}
+.hm-head h2{font-size:16px;font-weight:600;flex:1}
+.hm-close{background:none;border:none;font-size:20px;cursor:pointer;color:#94A3B8;line-height:1;padding:2px 8px;border-radius:6px}
+.hm-close:hover{background:#F1F5F9;color:#475569}
+.hm-body{padding:20px 22px}
+.hm-sec{margin-bottom:24px}
+.hm-sec:last-child{margin-bottom:0}
+.hm-sec h3{font-size:13px;font-weight:600;color:#1E293B;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #F1F5F9;display:flex;align-items:center;gap:6px}
+.hm-sec p{font-size:13px;color:#475569;line-height:1.7;margin-bottom:8px}
+.hm-row{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #F8FAFC;font-size:13px}
+.hm-row:last-child{border-bottom:none}
+.hm-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:1px}
+.hm-label{font-weight:500;color:#334155;min-width:120px;flex-shrink:0;font-size:12px;padding-top:3px}
+.hm-desc{color:#64748B;flex:1;font-size:12px;line-height:1.6}
+.hm-kboard{display:flex;flex-wrap:wrap;gap:8px}
+.hm-krow{display:flex;align-items:center;gap:8px;background:#F8FAFC;border-radius:7px;padding:6px 10px;font-size:12px;color:#475569}
+.hm-krow span{color:#334155}
+.step-chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;margin:2px}
+.chip-e{background:#DBEAFE;color:#1E40AF}
+.chip-p{background:#DCFCE7;color:#166534}
+.chip-ch{background:#FEF9C3;color:#854D0E}
+.hm-note{background:#FFF7ED;border:1px solid #FED7AA;border-radius:7px;padding:10px 12px;font-size:12px;color:#9A3412;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spin"></div>
+  <p>กำลังโหลดข้อมูลจาก Google Sheets...</p>
+</div>
+
+<div id="topbar">
+  <h1>📋 ติดตามการจัดซื้อจัดจ้าง — เทศบาลตำบลคลองสวน 2569</h1>
+  <span id="save-status">พร้อมใช้งาน</span>
+  <button class="btn-help" onclick="openHelp()">❓ คู่มือ</button>
+</div>
+
+<!-- TABS -->
+<div id="tabbar">
+  <div class="tab active" id="tab-list" onclick="switchTab('list',this)">
+    📋 รายการโครงการ <span class="tab-badge" id="tab-cnt">—</span>
+  </div>
+  <div class="tab" id="tab-add" onclick="switchTab('add',this)">
+    ➕ เพิ่มโครงการใหม่
+  </div>
+</div>
+
+<!-- TAB 1: LIST -->
+<div id="page-list">
+  <div id="searchbar">
+    <input id="search" type="text"
+           placeholder="🔍  ค้นหา ชื่อโครงการ / EGP / ขั้นตอน..."
+           oninput="applyFilter()" autocomplete="off">
+    <select class="dsel" id="dsel" onchange="applyFilter()">
+      <option value="">ทุกกอง</option>
+      <option>กองการศึกษา</option><option>กองคลัง</option><option>กองช่าง</option>
+      <option>กองประปา</option><option>กองยุทธศาสตร์ฯ</option><option>กองสาธารณสุขฯ</option>
+      <option>งานป้องกัน</option><option>สำนักปลัด</option>
+    </select>
+    <span id="cnt"></span>
+  </div>
+  <div id="statusbar">
+    <button class="sbtn active" id="sb-all"    onclick="setStatus('all',this)">ทั้งหมด <span class="sbtn-cnt" id="sc-all"></span></button>
+    <button class="sbtn"        id="sb-active" onclick="setStatus('active',this)">กำลังดำเนินการ <span class="sbtn-cnt" id="sc-active"></span></button>
+    <button class="sbtn"        id="sb-done"   onclick="setStatus('done',this)">เสร็จสิ้น <span class="sbtn-cnt" id="sc-done"></span></button>
+    <button class="sbtn"        id="sb-paused" onclick="setStatus('paused',this)">พัก/ยกเลิก <span class="sbtn-cnt" id="sc-paused"></span></button>
+  </div>
+  <div id="main">
+    <div id="lp"></div>
+    <div id="dp">
+      <div id="de"><div class="ic">📋</div><div>เลือกโครงการจากรายการทางซ้าย</div><div style="font-size:12px;margin-top:4px"><span class="kbd">Ctrl+F</span> ค้นหา</div></div>
+      <div id="pd"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: ADD -->
+<div id="page-add">
+  <div class="add-wrap">
+    <div id="add-success">
+      ✅ <span id="add-success-msg"></span>
+      <button class="btn btn-s" style="margin-left:auto;font-size:12px" onclick="goToProject()">ดูโครงการ</button>
+    </div>
+    <div class="add-card">
+      <div class="add-head">
+        <h2>เพิ่มโครงการใหม่</h2>
+        <p>กรอกข้อมูลโครงการที่ยังไม่มีในระบบ — <span class="kbd">Tab</span> ข้ามฟิลด์ถัดไป &nbsp;|&nbsp; <span class="kbd">Ctrl+Enter</span> บันทึก</p>
+      </div>
+      <div class="add-body">
+        <div class="fgrid">
+          <div class="frow">
+            <label>ลำดับที่ <span class="req">*</span></label>
+            <input id="f-no" class="finput" type="number" min="1" placeholder="เช่น 206" tabindex="1">
+          </div>
+          <div class="frow">
+            <label>เลขที่โครงการ EGP <span class="req">*</span></label>
+            <input id="f-egp" class="finput" type="text" placeholder="เช่น 68017000000"
+                   tabindex="2"
+                   oninput="sanitizeEGP(this); clearFErr('f-egp','e-egp')"
+                   onblur="validateEGP(this)">
+            <div id="e-egp" class="ferr">กรุณาระบุเลข EGP</div>
+          </div>
+        </div>
+        <div class="frow">
+          <label>ชื่อโครงการ <span class="req">*</span></label>
+          <input id="f-name" class="finput" type="text"
+                 placeholder="เช่น โครงการจัดซื้อวัสดุสำนักงาน ประจำปี 2569"
+                 tabindex="3"
+                 oninput="clearFErr('f-name','e-name')">
+          <div id="e-name" class="ferr">กรุณาระบุชื่อโครงการ (อย่างน้อย 5 ตัวอักษร)</div>
+        </div>
+        <div class="fgrid">
+          <div class="frow">
+            <label>งบประมาณ (บาท)</label>
+            <input id="f-budget" class="finput" type="text"
+                   placeholder="0.00" tabindex="4"
+                   oninput="formatBudgetInput(this)"
+                   onblur="finalizeBudget(this)">
+            <div class="budget-hint" id="budget-display"></div>
+          </div>
+          <div class="frow">
+            <label>กอง/หน่วยงาน <span class="req">*</span></label>
+            <select id="f-dept" class="finput" tabindex="5"
+                    onchange="clearFErr('f-dept','e-dept')">
+              <option value="">— เลือกกอง —</option>
+              <option>กองการศึกษา</option><option>กองคลัง</option><option>กองช่าง</option>
+              <option>กองประปา</option><option>กองยุทธศาสตร์ฯ</option>
+              <option>กองสาธารณสุขฯ</option><option>งานป้องกัน</option><option>สำนักปลัด</option>
+            </select>
+            <div id="e-dept" class="ferr">กรุณาเลือกกอง</div>
+          </div>
+        </div>
+        <div class="frow">
+          <label>วิธีจัดซื้อ/จัดจ้าง <span class="req">*</span></label>
+          <select id="f-method" class="finput" tabindex="6"
+                  onchange="onMethodChange(); clearFErr('f-method','e-method')">
+            <option value="">— เลือกวิธี —</option>
+            <option value="e-bidding (e-bid)">e-bidding (e-bid)</option>
+            <option value="ประกาศเชิญชวนทั่วไป">ประกาศเชิญชวนทั่วไป</option>
+            <option value="คัดเลือก">คัดเลือก</option>
+            <option value="วิธีเฉพาะเจาะจง">วิธีเฉพาะเจาะจง</option>
+          </select>
+          <div id="e-method" class="ferr">กรุณาเลือกวิธีจัดซื้อ</div>
+          <!-- Step preview -->
+          <div class="sp-wrap" id="steps-preview">
+            <div class="sp-title">ขั้นตอนที่ต้องดำเนินการ</div>
+            <div class="sp-grid" id="steps-preview-list"></div>
+          </div>
+        </div>
+        <div class="frow">
+          <label>หมายเหตุ (ถ้ามี)</label>
+          <textarea id="f-notes" class="finput" rows="3" tabindex="7"
+                    placeholder="บันทึกเพิ่มเติม เช่น แหล่งงบ, วงเงิน TOR..."></textarea>
+        </div>
+      </div>
+      <div class="add-foot">
+        <span class="add-foot-note">* จำเป็นต้องกรอก</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-s" onclick="clearAddForm()" tabindex="8">ล้างฟอร์ม</button>
+          <button class="btn-green" id="btn-save-new" onclick="submitNewProject()" tabindex="9">💾 บันทึกโครงการ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ─── HELP MODAL ─────────────────────────────────────────── -->
+<div id="help-overlay" onclick="closeHelpOnBg(event)">
+<div id="help-modal">
+  <div class="hm-head">
+    <span style="font-size:22px">📖</span>
+    <h2>คู่มือการใช้งาน — ระบบติดตามการจัดซื้อจัดจ้าง</h2>
+    <button class="hm-close" onclick="closeHelp()">✕</button>
+  </div>
+  <div class="hm-body">
+
+    <!-- ภาพรวม -->
+    <div class="hm-sec">
+      <h3>🏛 ภาพรวมระบบ</h3>
+      <p>ระบบนี้ใช้ติดตามสถานะการจัดซื้อจัดจ้างของ<b>เทศบาลตำบลคลองสวน ปี 2569</b> รองรับ 2 คนใช้งานพร้อมกัน ข้อมูลเก็บใน Google Sheets ซิงค์อัตโนมัติระหว่างคอมที่ทำงานและบ้าน</p>
+      <div class="hm-note">⚠ ต้องเชื่อมต่ออินเตอร์เน็ตตลอดเวลาที่ใช้งาน เพราะข้อมูลดึงจาก Google Sheets จริงเวลา</div>
+    </div>
+
+    <!-- แท็บ 1 -->
+    <div class="hm-sec">
+      <h3>📋 แท็บ 1 — รายการโครงการ</h3>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#EFF6FF">🔍</div>
+        <div class="hm-label">ค้นหา</div>
+        <div class="hm-desc">พิมพ์ชื่อโครงการ เลข EGP หรือชื่อขั้นตอน ระบบกรองรายการทันที</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#F0FDF4">🏢</div>
+        <div class="hm-label">กรองกอง</div>
+        <div class="hm-desc">เลือก dropdown "ทุกกอง" เพื่อดูเฉพาะโครงการของกองที่ต้องการ</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#FEF9C3">📊</div>
+        <div class="hm-label">กรองสถานะ</div>
+        <div class="hm-desc">กดปุ่ม ทั้งหมด / กำลังดำเนินการ / เสร็จสิ้น / พัก-ยกเลิก ตัวเลขในวงเล็บแสดงจำนวน</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#EDE9FE">🖱</div>
+        <div class="hm-label">คลิกโครงการ</div>
+        <div class="hm-desc">คลิกชื่อโครงการด้านซ้าย → ด้านขวาแสดงรายละเอียดและขั้นตอนทั้งหมด</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#FFF7ED">✅</div>
+        <div class="hm-label">บันทึกขั้นตอน</div>
+        <div class="hm-desc">คลิกขั้นตอนที่ต้องการ → ระบบบันทึกวันที่วันนี้อัตโนมัติ หรือกดปุ่ม <b>"บันทึกวันนี้"</b> ที่ขั้นตอนที่ไฮไลต์สีน้ำเงิน</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#FFFBEB">→</div>
+        <div class="hm-label">ขั้นตอนถัดไป</div>
+        <div class="hm-desc">ขั้นตอนสีเหลือง (ป้ายว่า "ถัดไป") คือขั้นตอนที่ควรดำเนินการต่อ ระบบแนะนำให้อัตโนมัติ</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#FEF2F2">✏️</div>
+        <div class="hm-label">แก้ไขวันที่</div>
+        <div class="hm-desc">คลิกที่วันที่ในขั้นตอนที่เสร็จแล้ว → แก้ไขได้โดยตรง รูปแบบต้องเป็น <b>DD/MM/YYYY</b> เช่น 28/07/2569</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#F0FDF4">💬</div>
+        <div class="hm-label">หมายเหตุ</div>
+        <div class="hm-desc">พิมพ์ในกล่องหมายเหตุ ระบบบันทึกอัตโนมัติหลังหยุดพิมพ์ 1 วินาที</div>
+      </div>
+    </div>
+
+    <!-- แท็บ 2 -->
+    <div class="hm-sec">
+      <h3>➕ แท็บ 2 — เพิ่มโครงการใหม่</h3>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#EFF6FF">📝</div>
+        <div class="hm-label">กรอกข้อมูล</div>
+        <div class="hm-desc">กรอกข้อมูลตามลำดับ ฟิลด์ที่มี <span style="color:#EF4444">*</span> จำเป็นต้องกรอก กด <span class="kbd">Tab</span> เพื่อข้ามฟิลด์ถัดไป</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#FEF9C3">🔢</div>
+        <div class="hm-label">เลข EGP</div>
+        <div class="hm-desc">ระบบตรวจสอบ EGP ซ้ำอัตโนมัติ และลบช่องว่างให้อัตโนมัติ ตัวเลขหรือตัวอักษร 5–20 ตัว</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#DCFCE7">🗂</div>
+        <div class="hm-label">วิธีจัดซื้อ</div>
+        <div class="hm-desc">เลือกวิธีจัดซื้อ → ระบบแสดงรายการขั้นตอนที่จะต้องดำเนินการให้ดูก่อน</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#EDE9FE">💾</div>
+        <div class="hm-label">บันทึก</div>
+        <div class="hm-desc">กด <b>"บันทึกโครงการ"</b> หรือ <span class="kbd">Ctrl+Enter</span> ระบบ save ไปยัง Google Sheets ทันที</div>
+      </div>
+    </div>
+
+    <!-- ขั้นตอนแต่ละวิธี -->
+    <div class="hm-sec">
+      <h3>📋 ขั้นตอนแยกตามวิธีจัดซื้อ</h3>
+      <p><span class="step-chip chip-e">e-bidding</span> 9 ขั้นตอน (e1–e9)</p>
+      <div style="font-size:12px;color:#475569;line-height:1.8;margin-bottom:10px;padding-left:8px">
+        e1 แต่งตั้งผู้รับผิดชอบ → e2 กำหนดราคากลาง → e3 จัดทำเอกสารประกวดราคา → e4 รายชื่อผู้เสนอราคา → e5 ประกาศผู้ชนะ → e6 จัดทำร่างสัญญา → e7 ตรวจสอบหลักประกัน → e8 ข้อมูลสาระสำคัญ → e9 บริหารสัญญา
+      </div>
+      <p><span class="step-chip chip-p">ประกาศเชิญชวน/คัดเลือก</span> 8 ขั้นตอน (ป1–ป8)</p>
+      <div style="font-size:12px;color:#475569;line-height:1.8;margin-bottom:10px;padding-left:8px">
+        ป1 จัดทำ TOR → ป2 จัดทำเอกสารและประกาศ → ป3 รายชื่อผู้เสนอราคา → ป4 ประกาศผู้ชนะ → ป5 จัดทำร่างสัญญา → ป6 ตรวจสอบหลักประกัน → ป7 ข้อมูลสาระสำคัญ → ป8 บริหารสัญญา
+      </div>
+      <p><span class="step-chip chip-ch">วิธีเฉพาะเจาะจง</span> 8 ขั้นตอน (ฉ1–ฉ8)</p>
+      <div style="font-size:12px;color:#475569;line-height:1.8;padding-left:8px">
+        ฉ1 จัดทำรายงานขอซื้อ/จ้าง → ฉ2 จัดทำร่างเอกสารเชิญชวน → ฉ3 รายชื่อผู้เสนอราคา → ฉ4 ประกาศผู้ชนะ → ฉ5 จัดทำร่างสัญญา → ฉ6 ตรวจสอบหลักประกัน → ฉ7 ข้อมูลสาระสำคัญ → ฉ8 บริหารสัญญา
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts -->
+    <div class="hm-sec">
+      <h3>⌨️ ปุ่มลัด Keyboard</h3>
+      <div class="hm-kboard">
+        <div class="hm-krow"><span class="kbd">Ctrl + F</span> <span>ไปยังช่องค้นหา</span></div>
+        <div class="hm-krow"><span class="kbd">Ctrl + Enter</span> <span>บันทึกโครงการใหม่ (แท็บ 2)</span></div>
+        <div class="hm-krow"><span class="kbd">F5</span> <span>รีเฟรชข้อมูลจาก Sheet</span></div>
+        <div class="hm-krow"><span class="kbd">Tab</span> <span>ข้ามฟิลด์ถัดไป (ฟอร์ม)</span></div>
+        <div class="hm-krow"><span class="kbd">Esc</span> <span>ปิดหน้าต่างนี้</span></div>
+      </div>
+    </div>
+
+    <!-- auto features -->
+    <div class="hm-sec">
+      <h3>🤖 ระบบทำงานอัตโนมัติ</h3>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#DCFCE7">✅</div>
+        <div class="hm-label">สถานะอัตโนมัติ</div>
+        <div class="hm-desc">เมื่อบันทึกขั้นตอนครบทุกขั้นตอน ระบบเปลี่ยนสถานะเป็น "เสร็จสมบูรณ์" อัตโนมัติทั้งใน app และ Google Sheets</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#EFF6FF">📅</div>
+        <div class="hm-label">วันที่อัตโนมัติ</div>
+        <div class="hm-desc">เมื่อเลือกขั้นตอนใน Col G ของ Google Sheets โดยตรง ระบบบันทึกวันที่วันนั้นให้อัตโนมัติ (ไม่เขียนทับวันที่เดิม)</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-icon" style="background:#FEF9C3">🔄</div>
+        <div class="hm-label">ซิงค์ 2 เครื่อง</div>
+        <div class="hm-desc">ข้อมูลเก็บใน Google Sheets กด F5 หรือปุ่ม "รีเฟรช" เพื่อโหลดข้อมูลล่าสุด ทั้ง 2 คนเห็นข้อมูลเดียวกัน</div>
+      </div>
+    </div>
+
+    <!-- troubleshoot -->
+    <div class="hm-sec">
+      <h3>🔧 แก้ไขปัญหาเบื้องต้น</h3>
+      <div class="hm-row">
+        <div class="hm-label" style="color:#DC2626">โหลดไม่ขึ้น</div>
+        <div class="hm-desc">ตรวจสอบอินเตอร์เน็ต → รีเฟรชหน้า (F5) → ถ้ายังไม่ได้ให้ login Google account ใหม่</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-label" style="color:#DC2626">บันทึกไม่ได้</div>
+        <div class="hm-desc">ดูข้อความสีแดงมุมขวาบน → ตรวจสอบสิทธิ์ Google account ต้องเป็น account เดียวกับที่ Deploy</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-label" style="color:#DC2626">ข้อมูลไม่อัพเดต</div>
+        <div class="hm-desc">กด F5 รีเฟรช หรือกดปุ่ม "รีเฟรช" ในหน้ารายละเอียดโครงการ</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding-top:8px;border-top:1px solid #F1F5F9">
+      <div style="font-size:12px;color:#94A3B8">เทศบาลตำบลคลองสวน ปี 2569 · พัฒนาด้วย Google Apps Script</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ─── CONSTANTS ──────────────────────────────────────────────────
+const STEPS = {
+  e:  ['e1. แต่งตั้งผู้รับผิดชอบ','e2. กำหนดราคากลาง',
+       'e3. จัดทำเอกสารประกวดราคา/ประกาศ','e4. รายชื่อผู้เสนอราคา',
+       'e5. จัดทำและประกาศผู้ชนะ','e6. จัดทำร่างสัญญา',
+       'e7. ตรวจสอบหลักประกัน','e8. ข้อมูลสาระสำคัญ','e9. บริหารสัญญา'],
+  p:  ['ป1. จัดทำ TOR','ป2. จัดทำเอกสารและประกาศ','ป3. รายชื่อผู้เสนอราคา',
+       'ป4. จัดทำและประกาศผู้ชนะ','ป5. จัดทำร่างสัญญา','ป6. ตรวจสอบหลักประกัน',
+       'ป7. ข้อมูลสาระสำคัญ','ป8. บริหารสัญญา'],
+  ch: ['ฉ1. จัดทำรายงานขอซื้อ/จ้าง','ฉ2. จัดทำร่างเอกสารเชิญชวน',
+       'ฉ3. รายชื่อผู้เสนอราคา','ฉ4. จัดทำและประกาศผู้ชนะ',
+       'ฉ5. จัดทำร่างสัญญา','ฉ6. ตรวจสอบหลักประกัน',
+       'ฉ7. ข้อมูลสาระสำคัญ','ฉ8. บริหารสัญญา'],
+};
+const MK_LABEL = {e:'e-bidding',p:'ประกาศเชิญชวน/คัดเลือก',ch:'วิธีเฉพาะเจาะจง','':'—'};
+const DATE_RE = /^\d{2}\/\d{2}\/\d{4}$/;
+
+// ─── STATE ──────────────────────────────────────────────────────
+let projects = [];
+let selIdx = null;
+let filterStatus = 'all';
+let lastAddedIdx = null;
+let notesTimer = null;
+
+// ─── TABS ────────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-list').style.display = tab==='list' ? 'flex' : 'none';
+  document.getElementById('page-add').style.display  = tab==='add'  ? 'block' : 'none';
+  if (tab==='add') {
+    document.getElementById('add-success').classList.remove('show');
+    const nos = projects.map(p => Number(p.no)||0);
+    document.getElementById('f-no').value = nos.length ? Math.max(...nos)+1 : 1;
+    setTimeout(() => document.getElementById('f-egp').focus(), 50);
+  }
+}
+
+// ─── LOAD ────────────────────────────────────────────────────────
+function loadData() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      projects = data;
+      document.getElementById('loading').style.display = 'none';
+      updateTabCount();
+      renderStatusCounts();
+      renderList();
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('loading').innerHTML =
+        '<p style="color:#DC2626">โหลดไม่สำเร็จ: '+err.message+'</p>'+
+        '<button onclick="loadData()" style="margin-top:12px;padding:6px 16px;cursor:pointer;border-radius:6px;border:1px solid #CBD5E1">ลองใหม่</button>';
+    })
+    .getAllProjects();
+}
+
+// ─── SAVE ────────────────────────────────────────────────────────
+function saveUpdate(update) {
+  setSaveStatus('saving','⏳ กำลังบันทึก...');
+  google.script.run
+    .withSuccessHandler(function() {
+      setSaveStatus('saved','✓ บันทึกแล้ว');
+      setTimeout(() => setSaveStatus('','พร้อมใช้งาน'), 3000);
+    })
+    .withFailureHandler(function(err) {
+      setSaveStatus('error','⚠ '+err.message);
+      toast('⚠ บันทึกไม่สำเร็จ: '+err.message, true);
+    })
+    .updateProject(update);
+}
+
+function setSaveStatus(cls, txt) {
+  const el = document.getElementById('save-status');
+  el.className = cls; el.textContent = txt;
+}
+
+// ─── STATUS LOGIC ────────────────────────────────────────────────
+function statusInfo(p) {
+  const s = p.status||'';
+  if (s.includes('เสร็จสมบูรณ์')||s.includes('เสร็จสิ้น')) return {cls:'b-done',label:'✅ เสร็จสมบูรณ์',grp:'done'};
+  if (s.includes('จัดทำสัญญา')||s.includes('ออกใบสั่ง'))   return {cls:'b-contract',label:'🟣 จัดทำสัญญา',grp:'active'};
+  if (s.includes('ประกาศผู้ชนะ'))  return {cls:'b-announce',label:'🟢 ประกาศผู้ชนะ',grp:'active'};
+  if (s.includes('รอตรวจรับ'))     return {cls:'b-wait',label:'🟡 รอตรวจรับ',grp:'active'};
+  if (s.includes('แต่งตั้ง')||s.includes('TOR')||s.includes('ราคากลาง')) return {cls:'b-wait',label:'🟡 แต่งตั้งฯ',grp:'active'};
+  if (s.includes('อยู่ระหว่างประกาศ')) return {cls:'b-inprog',label:'🟠 ประกาศ',grp:'active'};
+  if (s.includes('กำลังดำเนินการ')) return {cls:'b-inprog',label:'🔄 ดำเนินการ',grp:'active'};
+  if (p.special) return {cls:'b-pause',label:p.special.slice(0,14),grp:'paused'};
+  return {cls:'b-new',label:'⬜ รอดำเนินการ',grp:'active'};
+}
+
+function renderStatusCounts() {
+  const counts = {all:0, active:0, done:0, paused:0};
+  projects.forEach(p => {
+    counts.all++;
+    const g = statusInfo(p).grp;
+    if (counts[g] !== undefined) counts[g]++;
+  });
+  document.getElementById('sc-all').textContent    = counts.all;
+  document.getElementById('sc-active').textContent = counts.active;
+  document.getElementById('sc-done').textContent   = counts.done;
+  document.getElementById('sc-paused').textContent = counts.paused;
+}
+
+function updateTabCount() {
+  document.getElementById('tab-cnt').textContent = projects.length;
+}
+
+function matchFilter(p) {
+  const si = statusInfo(p);
+  if (filterStatus==='done'   && si.grp !== 'done')   return false;
+  if (filterStatus==='active' && si.grp !== 'active') return false;
+  if (filterStatus==='paused' && si.grp !== 'paused') return false;
+  const dept = document.getElementById('dsel').value;
+  if (dept && p.dept !== dept) return false;
+  const q = (document.getElementById('search').value||'').toLowerCase().trim();
+  if (q) {
+    const hay = (p.name+p.egp+p.stepCur+p.dept+p.status).toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+// ─── RENDER LIST ────────────────────────────────────────────────
+function renderList() {
+  const panel = document.getElementById('lp');
+  const vis = projects.filter(matchFilter);
+  document.getElementById('cnt').textContent = vis.length+'/'+projects.length+' โครงการ';
+  if (!vis.length) {
+    panel.innerHTML='<div class="lempty">ไม่พบโครงการ<br><small>ลองล้างตัวกรองหรือเปลี่ยนคำค้นหา</small></div>';
+    return;
+  }
+  panel.innerHTML = vis.map(p => {
+    const si = statusInfo(p);
+    const steps = STEPS[p.methodKey||'ch']||[];
+    const done  = steps.filter(s => p.stepDates && p.stepDates[s]).length;
+    const pct   = steps.length ? Math.round(done/steps.length*100) : 0;
+    const isSel = projects.indexOf(p)===selIdx;
+    const pfCls = 'pf-'+(p.methodKey||'ch');
+    return `<div class="pi${isSel?' sel':''}" onclick="selectProject(${projects.indexOf(p)})">
+      <div class="pn">${p.no}</div>
+      <div class="pi-info">
+        <div class="pi-name" title="${escHtml(p.name)}">${escHtml(p.name)}</div>
+        <div class="pi-sub">
+          <b>${escHtml(p.dept)}</b>
+          <span class="badge ${si.cls}">${si.label}</span>
+          ${steps.length ? `<span style="color:#94A3B8">${done}/${steps.length}</span>` : ''}
+        </div>
+        ${steps.length ? `<div class="prog-bar"><div class="prog-fill ${pfCls}" style="width:${pct}%"></div></div>` : ''}
+        <div class="pi-step">→ ${escHtml(p.stepCur)||'ยังไม่บันทึกขั้นตอน'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── SELECT / DETAIL ────────────────────────────────────────────
+function selectProject(idx) {
+  selIdx = idx;
+  renderList();
+  renderDetail();
+}
+
+function renderDetail() {
+  if (selIdx===null) return;
+  const p = projects[selIdx];
+  const steps = STEPS[p.methodKey||'ch']||[];
+  const si = statusInfo(p);
+  const budget = p.budget ? Number(p.budget).toLocaleString('th-TH',{maximumFractionDigits:2})+' บาท' : '—';
+
+  document.getElementById('de').style.display='none';
+  const det = document.getElementById('pd');
+  det.style.display='block';
+
+  // หา suggested next step
+  let lastDoneIdx = -1;
+  steps.forEach((s,i) => { if (p.stepDates && p.stepDates[s]) lastDoneIdx=i; });
+  const suggestedIdx = lastDoneIdx + 1 < steps.length ? lastDoneIdx + 1 : -1;
+
+  const stepsHtml = steps.map((s,i) => {
+    const hasDone  = p.stepDates && p.stepDates[s];
+    const isCur    = p.stepCur === s;
+    const isSug    = (i === suggestedIdx) && !hasDone && !isCur;
+    let rowCls='fut', iCls='si-fut', iChar=(i+1).toString();
+    if (hasDone)      { rowCls='done';     iCls='si-done'; iChar='✓'; }
+    else if (isCur)   { rowCls='cur';      iCls='si-cur';  iChar='●'; }
+    else if (isSug)   { rowCls='next-sug'; iCls='si-sug';  iChar='→'; }
+    const esc = s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const dateVal = hasDone ? escHtml(hasDone) : '';
+    return `<div class="sr ${rowCls}" onclick="clickStep('${esc}')">
+      <div class="si ${iCls}">${iChar}</div>
+      <div class="sname${hasDone?' done':''}">
+        ${escHtml(s)}${isSug?'<span class="sug-tag">ถัดไป</span>':''}
+      </div>
+      ${hasDone
+        ? `<input class="di" type="text" value="${dateVal}"
+             onchange="editDate('${esc}',this)"
+             onclick="event.stopPropagation()">
+           <span class="di-err-tip" id="de-${i}">รูปแบบ: DD/MM/YYYY</span>`
+        : isCur
+          ? `<button class="btn-td" onclick="event.stopPropagation();setToday('${esc}')">บันทึกวันนี้</button>
+             <button class="btn-clr" onclick="event.stopPropagation();undoStep('${esc}')">ยกเลิก</button>`
+          : `<span style="color:#CBD5E1;font-size:12px">—</span>`
+      }</div>`;
+  }).join('');
+
+  det.innerHTML = `
+    <div class="dh">
+      <div class="dt">${escHtml(p.name)}</div>
+      <div class="dm">
+        <span>EGP: <b>${escHtml(p.egp)}</b></span>
+        <span>งบ: <b>${budget}</b></span>
+        <span>กอง: <b>${escHtml(p.dept)}</b></span>
+        <span>วิธี: <b>${MK_LABEL[p.methodKey||'ch']}</b></span>
+        <span class="badge ${si.cls}">${si.label}</span>
+      </div>
+    </div>
+    <div class="ss">
+      <div class="ss-title">ขั้นตอนการดำเนินงาน</div>
+      ${stepsHtml}
+    </div>
+    <div class="ss">
+      <label class="sl">หมายเหตุ</label>
+      <textarea class="nb" placeholder="บันทึกข้อความเพิ่มเติม..."
+                oninput="saveNotesDebounced(this.value)">${escHtml(p.notes||'')}</textarea>
+    </div>
+    <div class="ab">
+      <button class="btn btn-s" onclick="refreshData()">🔄 รีเฟรช</button>
+      <button class="btn btn-s" onclick="clearAllDates()" style="color:#DC2626;border-color:#FECACA">🗑 ล้างวันที่ทั้งหมด</button>
+    </div>`;
+}
+
+// ─── STEP ACTIONS ────────────────────────────────────────────────
+function todayStr() {
+  const d = new Date();
+  return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();
+}
+
+function clickStep(stepName) {
+  const p = projects[selIdx];
+  if (p.stepDates && p.stepDates[stepName]) return;
+  if (!p.stepDates) p.stepDates = {};
+  p.stepDates[stepName] = todayStr();
+  p.stepCur = stepName;
+  checkAutoStatus(p);
+  renderDetail(); renderList(); renderStatusCounts();
+  toast('✓ บันทึก "'+stepName+'" — '+todayStr());
+  saveUpdate({egp:p.egp, stepCur:stepName, stepName, stepDate:todayStr()});
+}
+
+function setToday(stepName) {
+  const p = projects[selIdx];
+  if (!p.stepDates) p.stepDates = {};
+  p.stepDates[stepName] = todayStr();
+  p.stepCur = stepName;
+  checkAutoStatus(p);
+  renderDetail(); renderList(); renderStatusCounts();
+  toast('✓ '+todayStr());
+  saveUpdate({egp:p.egp, stepCur:stepName, stepName, stepDate:todayStr()});
+}
+
+function editDate(stepName, inputEl) {
+  const val = inputEl.value.trim();
+  // Validate format DD/MM/YYYY
+  if (val && !DATE_RE.test(val)) {
+    inputEl.classList.add('err');
+    inputEl.title = 'รูปแบบวันที่ต้องเป็น DD/MM/YYYY เช่น 28/07/2569';
+    // ไม่บันทึก — แจ้งเตือนแล้วรอให้แก้
+    return;
+  }
+  inputEl.classList.remove('err');
+  inputEl.title = '';
+  const p = projects[selIdx];
+  if (!p.stepDates) p.stepDates = {};
+  if (val) {
+    p.stepDates[stepName] = val;
+    toast('✓ แก้ไขวันที่แล้ว');
+    saveUpdate({egp:p.egp, stepName, stepDate:val});
+  } else {
+    // ถ้าล้างวันที่ให้ลบออก
+    delete p.stepDates[stepName];
+    if (p.stepCur === stepName) p.stepCur = '';
+    renderDetail(); renderList(); renderStatusCounts();
+    saveUpdate({egp:p.egp, stepCur:p.stepCur, undoStep:stepName});
+  }
+}
+
+function undoStep(stepName) {
+  const p = projects[selIdx];
+  if (p.stepDates) delete p.stepDates[stepName];
+  p.stepCur = '';
+  checkAutoStatus(p);
+  renderDetail(); renderList(); renderStatusCounts();
+  saveUpdate({egp:p.egp, stepCur:'', undoStep:stepName});
+}
+
+function clearAllDates() {
+  if (!confirm('ล้างวันที่ทั้งหมดของโครงการนี้?\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้')) return;
+  const p = projects[selIdx];
+  p.stepDates = {}; p.stepCur = ''; p.status = '';
+  renderDetail(); renderList(); renderStatusCounts();
+  toast('ล้างวันที่ทั้งหมดแล้ว');
+  saveUpdate({egp:p.egp, stepCur:'', clearAllDates:true});
+}
+
+function checkAutoStatus(p) {
+  const steps = STEPS[p.methodKey||'ch']||[];
+  if (!steps.length) return;
+  const allDone = steps.every(s => p.stepDates && p.stepDates[s]);
+  if (allDone && !(p.status||'').includes('เสร็จ')) {
+    p.status = 'เสร็จสมบูรณ์';
+  } else if (!allDone && p.status === 'เสร็จสมบูรณ์') {
+    p.status = 'กำลังดำเนินการ';
+  }
+}
+
+// ─── NOTES (debounced) ──────────────────────────────────────────
+function saveNotesDebounced(val) {
+  const p = projects[selIdx];
+  p.notes = val;
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(() => {
+    saveUpdate({egp:p.egp, notes:val});
+  }, 800);
+}
+
+// ─── FILTER ──────────────────────────────────────────────────────
+function setStatus(s, btn) {
+  filterStatus = s;
+  document.querySelectorAll('.sbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  renderList();
+  if (selIdx!==null && !matchFilter(projects[selIdx])) {
+    selIdx = null;
+    document.getElementById('de').style.display='flex';
+    document.getElementById('pd').style.display='none';
+  }
+}
+
+// ─── REFRESH ─────────────────────────────────────────────────────
+function refreshData() {
+  selIdx = null;
+  document.getElementById('loading').style.display='flex';
+  loadData();
+}
+
+// ─── ADD FORM ────────────────────────────────────────────────────
+function sanitizeEGP(input) {
+  // ลบ space ออก auto
+  input.value = input.value.replace(/\s/g,'');
+}
+
+function validateEGP(input) {
+  const v = input.value.trim();
+  if (!v) return;
+  if (!/^[0-9A-Za-z\-\/]{5,20}$/.test(v)) {
+    input.classList.add('err');
+    document.getElementById('e-egp').textContent = 'เลข EGP ควรมีตัวเลข/ตัวอักษร 5–20 ตัว ไม่มีช่องว่าง';
+    document.getElementById('e-egp').style.display = 'block';
+  }
+  // Check duplicate live
+  if (projects.some(p => String(p.egp).trim() === v)) {
+    input.classList.add('err');
+    document.getElementById('e-egp').textContent = 'เลข EGP นี้มีในระบบแล้ว';
+    document.getElementById('e-egp').style.display = 'block';
+  }
+}
+
+function formatBudgetInput(input) {
+  // ลบอักขระที่ไม่ใช่ตัวเลขและจุด
+  input.value = input.value.replace(/[^0-9.]/g,'');
+}
+
+function finalizeBudget(input) {
+  const v = parseFloat(input.value)||0;
+  if (v < 0) { input.value = '0'; }
+  const hint = document.getElementById('budget-display');
+  if (v > 0) {
+    hint.textContent = v.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' บาท';
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function onMethodChange() {
+  const method = document.getElementById('f-method').value;
+  const mk = methodKeyFromLabel(method);
+  const steps = STEPS[mk] || [];
+  const wrap = document.getElementById('steps-preview');
+  const list = document.getElementById('steps-preview-list');
+  if (!steps.length || !method) { wrap.style.display='none'; return; }
+  list.innerHTML = steps.map(s => `<div class="sp-step">${escHtml(s)}</div>`).join('');
+  wrap.style.display = 'block';
+}
+
+function clearFErr(inputId, errId) {
+  document.getElementById(inputId).classList.remove('err');
+  document.getElementById(errId).style.display='none';
+}
+
+function showFErr(inputId, errId, msg) {
+  const el = document.getElementById(inputId);
+  const em = document.getElementById(errId);
+  el.classList.add('err'); em.textContent=msg; em.style.display='block';
+  el.scrollIntoView({block:'center',behavior:'smooth'});
+  el.focus();
+}
+
+function clearAddForm() {
+  document.getElementById('f-egp').value    = '';
+  document.getElementById('f-name').value   = '';
+  document.getElementById('f-budget').value = '';
+  document.getElementById('f-dept').value   = '';
+  document.getElementById('f-method').value = '';
+  document.getElementById('f-notes').value  = '';
+  document.getElementById('budget-display').textContent = '';
+  document.getElementById('steps-preview').style.display = 'none';
+  document.getElementById('add-success').classList.remove('show');
+  ['f-egp','f-name','f-dept','f-method'].forEach(id =>
+    document.getElementById(id).classList.remove('err'));
+  document.querySelectorAll('.ferr').forEach(el => el.style.display='none');
+  const nos = projects.map(p=>Number(p.no)||0);
+  document.getElementById('f-no').value = nos.length ? Math.max(...nos)+1 : 1;
+}
+
+function submitNewProject() {
+  const egp    = document.getElementById('f-egp').value.trim();
+  const name   = document.getElementById('f-name').value.trim();
+  const dept   = document.getElementById('f-dept').value;
+  const method = document.getElementById('f-method').value;
+  const no     = Number(document.getElementById('f-no').value)||0;
+  const budget = parseFloat(document.getElementById('f-budget').value)||0;
+  let valid = true;
+
+  if (!egp)           { showFErr('f-egp','e-egp','กรุณาระบุเลข EGP');                     valid=false; }
+  else if (projects.some(p=>String(p.egp).trim()===egp))
+                      { showFErr('f-egp','e-egp','เลข EGP นี้มีในระบบแล้ว');              valid=false; }
+  if (!name || name.length<3)
+                      { showFErr('f-name','e-name','กรุณาระบุชื่อโครงการ (อย่างน้อย 3 ตัวอักษร)'); valid=false; }
+  if (!dept)          { showFErr('f-dept','e-dept','กรุณาเลือกกอง');                       valid=false; }
+  if (!method)        { showFErr('f-method','e-method','กรุณาเลือกวิธีจัดซื้อ');          valid=false; }
+  if (budget < 0)     { showFErr('f-budget','e-budget','งบประมาณต้องไม่ติดลบ');           valid=false; }
+  if (!valid) return;
+
+  const newProj = {
+    no, egp, name, budget, method,
+    methodKey: methodKeyFromLabel(method),
+    dept,
+    stepCur:'', stepNext:'', status:'', special:'',
+    notes: document.getElementById('f-notes').value.trim(),
+    stepDates: {},
+  };
+
+  projects.push(newProj);
+  lastAddedIdx = projects.length-1;
+  updateTabCount();
+  renderStatusCounts();
+
+  const btn = document.getElementById('btn-save-new');
+  btn.disabled=true; btn.textContent='⏳ กำลังบันทึก...';
+  setSaveStatus('saving','⏳ กำลังบันทึกโครงการใหม่...');
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      setSaveStatus('saved','✓ บันทึกโครงการใหม่แล้ว');
+      setTimeout(()=>setSaveStatus('','พร้อมใช้งาน'),4000);
+      btn.disabled=false; btn.textContent='💾 บันทึกโครงการ';
+      const succ = document.getElementById('add-success');
+      document.getElementById('add-success-msg').textContent =
+        'บันทึก "'+name+'" เรียบร้อย (แถว '+res.row+')';
+      succ.classList.add('show');
+      document.getElementById('page-add').scrollTop=0;
+      clearAddForm();
+      toast('✅ เพิ่มโครงการสำเร็จ');
+    })
+    .withFailureHandler(function(err) {
+      setSaveStatus('error','⚠ '+err.message);
+      btn.disabled=false; btn.textContent='💾 บันทึกโครงการ';
+      projects.splice(lastAddedIdx, 1);
+      lastAddedIdx=null;
+      updateTabCount(); renderStatusCounts();
+      toast('⚠ บันทึกไม่สำเร็จ: '+err.message, true);
+    })
+    .addProject(newProj);
+}
+
+function goToProject() {
+  if (lastAddedIdx===null||lastAddedIdx>=projects.length) return;
+  selIdx = lastAddedIdx;
+  switchTab('list', document.getElementById('tab-list'));
+  renderList();
+  renderDetail();
+}
+
+function methodKeyFromLabel(method) {
+  const m = String(method||'').toLowerCase();
+  if (m.includes('e-bid')||m.includes('ebid')) return 'e';
+  if (m.includes('เฉพาะ'))                      return 'ch';
+  return 'p';
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background = isErr ? '#991B1B' : '#1E293B';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'), isErr ? 4000 : 2500);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key==='F5'||(e.ctrlKey&&e.key==='r')) {
+    e.preventDefault(); refreshData();
+  }
+  if (e.ctrlKey&&e.key==='f') {
+    e.preventDefault();
+    switchTab('list', document.getElementById('tab-list'));
+    document.getElementById('search').focus();
+  }
+  // Ctrl+Enter ใน tab เพิ่มโครงการ = บันทึก
+  if (e.ctrlKey&&e.key==='Enter') {
+    const pg = document.getElementById('page-add');
+    if (pg.style.display==='block') { e.preventDefault(); submitNewProject(); }
+  }
+  // Esc = ปิด help modal
+  if (e.key==='Escape') { closeHelp(); }
+});
+
+// ─── HELP MODAL ──────────────────────────────────────────────────
+function openHelp() {
+  const ov = document.getElementById('help-overlay');
+  ov.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeHelp() {
+  const ov = document.getElementById('help-overlay');
+  ov.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function closeHelpOnBg(e) {
+  if (e.target === document.getElementById('help-overlay')) closeHelp();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

@@ -2051,6 +2051,24 @@
     </div>
   </div>
 
+  <!-- QR SITE URL SETTINGS -->
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-header"><div class="panel-title">🔗 URL เว็บแอป (สำหรับ QR Code)</div></div>
+    <div class="panel-body">
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6;">
+        QR Code จะเข้ารหัสเป็น URL นี้ เพื่อให้สแกนด้วยกล้องมือถือแล้วเปิดเว็บแอปได้ทันที<br>
+        <strong style="color:var(--text-primary);">ถ้า deploy บน GitHub Pages แล้ว ไม่ต้องแก้ไขอะไร</strong> — ระบบจะใช้ URL จากเว็บอัตโนมัติ<br>
+        ตั้งค่าเฉพาะกรณีเปิดไฟล์จากเครื่อง (file:///) แล้วต้องการพิมพ์ป้าย QR ให้ชี้ไปเว็บจริง
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input class="form-input" id="scalmSiteUrlInput" placeholder="https://punthusan-wq.github.io/Scalm_thai/" style="flex:1;">
+        <button class="btn btn-primary" onclick="saveScalmSiteUrl()">💾 บันทึก</button>
+        <button class="btn btn-outline" onclick="clearScalmSiteUrl()">ล้าง</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;" id="scalmSiteUrlStatus"></div>
+    </div>
+  </div>
+
   <div class="grid-2">
     <div class="panel">
       <div class="panel-header"><div class="panel-title">🔔 การแจ้งเตือนอัตโนมัติ</div></div>
@@ -2996,6 +3014,8 @@ function onLoginSuccess(user){
   renderInstrumentTable();
   refreshSettingsDbInfo();
   refreshImportPageStatus();
+  // ── ถ้าเปิดจาก QR scan → แสดงข้อมูลเครื่องมือทันทีหลัง login ──
+  handleQrUrlParam();
 }
 
 // ── Apply role restrictions across the UI ────────────────
@@ -6329,6 +6349,23 @@ function loadScript(src,cb){
   document.head.appendChild(s);
 }
 let qrCurrentId=null;
+// ── QR encodes a URL so phone camera opens the web app directly ──
+const SCALM_SITE_URL_KEY = 'scalmSiteUrl';
+function getScalmSiteUrl(){
+  // 1) ถ้ามี URL ที่ตั้งค่าไว้ใน Settings → ใช้ตัวนั้น
+  const saved = localStorage.getItem(SCALM_SITE_URL_KEY);
+  if(saved) return saved.replace(/\/+$/,'') + '/';
+  // 2) ถ้าเปิดจากเว็บจริง (http/https) → ใช้ URL ปัจจุบัน
+  const loc = window.location;
+  if(loc.protocol === 'https:' || loc.protocol === 'http:'){
+    return loc.origin + loc.pathname;
+  }
+  // 3) Fallback — เปิดจาก file:/// → ใช้ค่าเริ่มต้น
+  return 'https://punthusan-wq.github.io/Scalm_thai/';
+}
+function makeQrUrl(eqId){
+  return getScalmSiteUrl() + '?eq=' + encodeURIComponent(eqId);
+}
 function showQR(id){
   qrCurrentId=id;
   const row=(getDB().find(r=>String(r.id).toUpperCase()===String(id).toUpperCase()))||{id};
@@ -6338,7 +6375,7 @@ function showQR(id){
   box.innerHTML='<div style="color:#999;font-size:12px;">กำลังสร้าง QR…</div>';
   function draw(){
     box.innerHTML='';
-    new QRCode(box,{ text:`SCALM:${row.id||id}`, width:180, height:180, correctLevel:QRCode.CorrectLevel.H });
+    new QRCode(box,{ text:makeQrUrl(row.id||id), width:180, height:180, correctLevel:QRCode.CorrectLevel.H });
   }
   if(window.QRCode) draw();
   else loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',draw);
@@ -6370,7 +6407,7 @@ function printAllQR(){
       const idEl=win.document.createElement('div'); idEl.style.cssText='font-weight:800;font-size:13px;margin-top:6px;'; idEl.textContent=row.id||'';
       const nmEl=win.document.createElement('div'); nmEl.style.cssText='font-size:10px;color:#555;margin-top:2px;'; nmEl.textContent=row.name||'';
       cell.appendChild(idEl); cell.appendChild(nmEl); g.appendChild(cell);
-      new win.QRCode(qbox,{ text:`SCALM:${row.id}`, width:100, height:100, correctLevel:win.QRCode.CorrectLevel.H });
+      new win.QRCode(qbox,{ text:makeQrUrl(row.id), width:100, height:100, correctLevel:win.QRCode.CorrectLevel.H });
     });
     setTimeout(()=>win.print(),500);
   };
@@ -6441,8 +6478,15 @@ function closeScanModal(){
   document.getElementById('scanReader').innerHTML='';
 }
 function onScanSuccess(decodedText){
-  const id=decodedText.replace(/^SCALM:/,'').trim();
-  lookupAndShowInstrument(id);
+  // รองรับทั้ง URL format ใหม่ (?eq=xxx) และ SCALM:xxx แบบเก่า
+  let id = '';
+  try {
+    const url = new URL(decodedText);
+    id = url.searchParams.get('eq') || '';
+  } catch(e) {
+    id = decodedText.replace(/^SCALM:/i,'').trim();
+  }
+  if(id) lookupAndShowInstrument(id);
 }
 function manualScanLookup(){
   const id=document.getElementById('manualScanInput').value.trim();
@@ -6622,6 +6666,32 @@ function refreshPaFlowStatus(){
   const input=document.getElementById('paFlowUrl');
   if(input && !input.value) input.value=url;
   el.textContent = url ? '✅ ตั้งค่าแล้ว — เมื่อกด "ส่งคำขอนัดหมาย" ที่หน้าเครื่องมือวัด ระบบจะยิง POST ไปยัง Flow นี้' : 'ยังไม่ได้ตั้งค่า — วาง URL จาก Power Automate trigger "When a HTTP request is received"';
+}
+// ── QR Site URL Settings ──
+function saveScalmSiteUrl(){
+  let url=document.getElementById('scalmSiteUrlInput').value.trim();
+  if(!url){ showToast('critical','กรุณากรอก URL ก่อนบันทึก'); return; }
+  if(!/^https?:\/\//.test(url)){ showToast('critical','URL ต้องขึ้นต้นด้วย https://'); return; }
+  url = url.replace(/\/+$/,'');
+  localStorage.setItem(SCALM_SITE_URL_KEY, url);
+  refreshScalmSiteUrlStatus();
+  showToast('save','บันทึก URL สำหรับ QR Code แล้ว');
+}
+function clearScalmSiteUrl(){
+  localStorage.removeItem(SCALM_SITE_URL_KEY);
+  document.getElementById('scalmSiteUrlInput').value='';
+  refreshScalmSiteUrlStatus();
+  showToast('save','ล้าง URL แล้ว — ระบบจะใช้ URL จากเว็บปัจจุบันแทน');
+}
+function refreshScalmSiteUrlStatus(){
+  const el=document.getElementById('scalmSiteUrlStatus'); if(!el) return;
+  const saved=localStorage.getItem(SCALM_SITE_URL_KEY);
+  const input=document.getElementById('scalmSiteUrlInput');
+  if(input && !input.value && saved) input.value=saved;
+  const currentUrl = getScalmSiteUrl();
+  el.innerHTML = saved
+    ? `✅ QR จะชี้ไป: <strong style="color:var(--accent-cyan);">${escHtml(currentUrl)}?eq=XXX</strong>`
+    : `📍 ใช้ URL อัตโนมัติ: <strong style="color:var(--accent-cyan);">${escHtml(currentUrl)}?eq=XXX</strong>`;
 }
 // สร้าง badge + ปุ่มสำหรับคอลัมน์ Workflow ในตารางเครื่องมือ ตามสถานะ workflowStatus ของแต่ละ record
 function workflowCellHtml(row){
@@ -7253,6 +7323,7 @@ function refreshSettingsDbInfo(){
   refreshAutoCreateStatus();
   refreshSlaStatus();
   renderOwnerEmailList();
+  refreshScalmSiteUrlStatus();
 }
 // ── กรณีพิเศษ: แก้ไขครบกำหนดเอง (LA-B Planner เท่านั้น) ──
 function openNextCalOverride(eqId){
@@ -7612,6 +7683,26 @@ function restoreTheme(){
   } catch(e){}
 }
 
+/* ══ QR URL PARAM HANDLER ══════════════════════════════ */
+// เมื่อเปิดเว็บจาก QR scan → URL จะมี ?eq=30000903
+// ระบบจะเปิด popup แสดงข้อมูลเครื่องมือนั้นอัตโนมัติ
+function handleQrUrlParam(){
+  const params = new URLSearchParams(window.location.search);
+  const eq = params.get('eq');
+  if(!eq) return;
+  // เปิด scan modal แล้วแสดงผล lookup ทันที
+  setTimeout(()=>{
+    document.getElementById('scanModal').classList.add('show');
+    document.getElementById('scanLoadMsg').style.display='none';
+    document.getElementById('scanReader').innerHTML='<div style="text-align:center;color:var(--text-secondary);padding:16px;font-size:12px;">📱 เปิดจาก QR Scan — EQ: <strong style="color:var(--accent-cyan);">' + escHtml(eq) + '</strong></div>';
+    lookupAndShowInstrument(eq);
+    // ลบ ?eq= ออกจาก URL bar เพื่อไม่ให้ popup ค้างเมื่อ refresh
+    if(window.history.replaceState){
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, 300);
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   restoreTheme();
   bootstrapDefaultIdFormat();
@@ -7631,6 +7722,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(meta.count>0){ refreshDashboard(); renderInstrumentTable(); }
       renderAuditTrail();
       renderHistorySummary();
+      // ── Auto-lookup ถ้าเปิดจาก QR scan (?eq=xxx) ──
+      handleQrUrlParam();
       return;
     }
   }

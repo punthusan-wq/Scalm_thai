@@ -983,7 +983,7 @@
     <div class="auth-field" style="margin-top:14px;">
       <label class="auth-label">หรือกรอก EQ No. ด้วยตนเอง</label>
       <div style="display:flex;gap:8px;">
-        <input class="auth-input" id="manualScanInput" placeholder="เช่น LA001" onkeydown="if(event.key==='Enter')manualScanLookup()">
+        <input class="auth-input" id="manualScanInput" placeholder="เช่น 30000253" onkeydown="if(event.key==='Enter')manualScanLookup()">
         <button class="btn btn-primary" onclick="manualScanLookup()" style="flex-shrink:0;">ค้นหา</button>
       </div>
     </div>
@@ -6494,9 +6494,34 @@ function manualScanLookup(){
   lookupAndShowInstrument(id);
 }
 function lookupAndShowInstrument(id){
-  const row=getDB().find(r=>String(r.id).toUpperCase()===String(id).toUpperCase());
+  const db = getDB();
+  const row=db.find(r=>String(r.id).toUpperCase()===String(id).toUpperCase());
   const resEl=document.getElementById('scanResult');
-  if(!row){ resEl.innerHTML=`<div class="alert-item alert-critical"><div class="alert-icon">❌</div><div class="alert-content"><div class="alert-title">ไม่พบ EQ No. ${escHtml(id)}</div><div class="alert-desc">กรุณาตรวจสอบ EQ No. อีกครั้ง</div></div></div>`; return; }
+
+  if(!row){
+    // ── ถ้า DB ว่างเปล่า → แจ้งว่าต้อง import ข้อมูลก่อน ──
+    if(db.length === 0){
+      resEl.innerHTML=`<div class="panel" style="margin-bottom:0;border-color:var(--accent-yellow);">
+        <div class="panel-body" style="text-align:center;padding:20px;">
+          <div style="font-size:28px;margin-bottom:10px;">📭</div>
+          <div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">ยังไม่มีข้อมูลในเครื่องนี้</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+            EQ No. <strong style="color:var(--accent-cyan);">${escHtml(id)}</strong> อาจมีอยู่จริง แต่เบราว์เซอร์นี้ยังไม่เคยนำเข้าข้อมูล<br><br>
+            <strong style="color:var(--accent-yellow);">📱 ถ้าสแกน QR จากมือถือ:</strong><br>
+            ข้อมูลเครื่องมือถูกเก็บในเบราว์เซอร์ของเครื่องที่ Import ไว้<br>
+            ต้อง Export จากเครื่องเดิม แล้ว Import ที่มือถือด้วย<br>
+            (หน้า ⚙️ ตั้งค่า → Export → ส่งไฟล์มาเปิดที่มือถือ → Import)
+          </div>
+          <div style="margin-top:14px;">
+            <button class="btn btn-primary btn-sm" onclick="closeScanModal();switchPage('import',5);">📥 ไปหน้านำเข้าข้อมูล</button>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      resEl.innerHTML=`<div class="alert-item alert-critical"><div class="alert-icon">❌</div><div class="alert-content"><div class="alert-title">ไม่พบ EQ No. ${escHtml(id)}</div><div class="alert-desc">ฐานข้อมูลมี ${db.length} รายการ แต่ไม่ตรงกับรหัสนี้ — กรุณาตรวจสอบ EQ No. อีกครั้ง</div></div></div>`;
+    }
+    return;
+  }
   const st=computeStatus(row);
   const badge=st==='เกินกำหนด'?`<span class="badge badge-red">🚨 เกินกำหนด</span>`:st==='ใกล้ครบ'?`<span class="badge badge-yellow">⏰ ใกล้ครบ</span>`:`<span class="badge badge-green">✓ ใช้งานได้</span>`;
 

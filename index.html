@@ -3626,22 +3626,26 @@ let instCurrentPage = 1;
 let instPageSize = 50;
 let instFilteredData = []; // holds filtered rows for pagination
 
-const INSTRUMENT_TYPES = ['Torque','Electrical','Dimension','Force','Pressure','Weight','Mass'];
-const TYPE_ICONS = {Torque:'🔧',Electrical:'⚡',Dimension:'📏',Force:'💪',Pressure:'🌡️',Weight:'⚖️',Mass:'🧱'};
+const TYPE_ICONS = {Torque:'🔧',Electrical:'⚡',Dimension:'📏',Force:'💪',Pressure:'🌡️',Weight:'⚖️',Mass:'🧱',Temperature:'🌡️',Airspeed:'✈️',Rotation:'🔄',Voltage:'⚡',Flow:'💧',Humidity:'💦',Vibration:'📳',Frequency:'〰️'};
 
 function buildTypeTabs(){
   const db = getDB();
   const container = document.getElementById('typeTabs');
   if(!container) return;
-  // Count per type
+  // Count per type dynamically from actual data
   const counts = {};
-  INSTRUMENT_TYPES.forEach(t => counts[t] = 0);
-  db.forEach(r => { if(counts.hasOwnProperty(r.type)) counts[r.type]++; });
+  db.forEach(r => {
+    const t = (r.type||'').trim();
+    if(!t) return;
+    counts[t] = (counts[t]||0) + 1;
+  });
+  // Sort types by count descending
+  const sortedTypes = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
+
   let html = `<div class="type-tab${instCurrentType==='ทั้งหมด'?' active':''}" data-type="ทั้งหมด" onclick="selectTypeTab(this)">📦 ทั้งหมด <span class="type-tab-count">${db.length}</span></div>`;
-  INSTRUMENT_TYPES.forEach(t => {
-    if(counts[t] > 0){
-      html += `<div class="type-tab${instCurrentType===t?' active':''}" data-type="${t}" onclick="selectTypeTab(this)">${TYPE_ICONS[t]||'🔧'} ${t} <span class="type-tab-count">${counts[t]}</span></div>`;
-    }
+  sortedTypes.forEach(t => {
+    const icon = TYPE_ICONS[t] || '🔧';
+    html += `<div class="type-tab${instCurrentType===t?' active':''}" data-type="${escHtml(t)}" onclick="selectTypeTab(this)">${icon} ${escHtml(t)} <span class="type-tab-count">${counts[t]}</span></div>`;
   });
   container.innerHTML = html;
 }

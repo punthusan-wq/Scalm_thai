@@ -976,9 +976,9 @@
       <span>📷 สแกน QR เครื่องมือวัด</span>
       <span style="cursor:pointer;color:#4a6080;font-size:18px;" onclick="closeScanModal()">✕</span>
     </div>
-    <div id="scanReaderWrap" style="border-radius:10px;overflow:hidden;background:#000;min-height:220px;display:flex;align-items:center;justify-content:center;">
-      <div id="scanReader" style="width:100%;"></div>
-      <div id="scanLoadMsg" style="color:#8fa8c8;font-size:12px;">กำลังเปิดกล้อง…</div>
+    <div id="scanReaderWrap" style="border-radius:10px;overflow:hidden;background:#000;min-height:260px;position:relative;">
+      <div id="scanReader" style="width:100%;min-height:260px;"></div>
+      <div id="scanLoadMsg" style="color:#8fa8c8;font-size:12px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;background:rgba(0,0,0,0.7);padding:12px 18px;border-radius:8px;">กำลังเปิดกล้อง…</div>
     </div>
     <div class="auth-field" style="margin-top:14px;">
       <label class="auth-label">หรือกรอก EQ No. ด้วยตนเอง</label>
@@ -6378,28 +6378,63 @@ let html5QrInstance=null;
 function openScanModal(){
   document.getElementById('scanModal').classList.add('show');
   document.getElementById('scanResult').innerHTML='';
-  document.getElementById('scanLoadMsg').style.display='flex';
+  const loadMsg=document.getElementById('scanLoadMsg');
+  loadMsg.textContent='กำลังเปิดกล้อง…';
+  loadMsg.style.display='flex';
+
+  // ต้อง clear instance เก่าก่อนเสมอ ไม่งั้นจะ start ซ้ำไม่ได้
+  if(html5QrInstance){
+    try{ html5QrInstance.stop().catch(()=>{}); html5QrInstance.clear(); }catch(e){}
+    html5QrInstance=null;
+  }
+  // Clear reader container
+  document.getElementById('scanReader').innerHTML='';
+
   function startScanner(){
-    document.getElementById('scanLoadMsg').style.display='none';
-    if(html5QrInstance){ return; }
+    loadMsg.style.display='none';
     html5QrInstance=new Html5Qrcode('scanReader');
-    // ลองขอกล้องหลัง (environment) ก่อนเสมอ — เหมาะกับการสแกนป้าย QR บนเครื่องมือ
-    html5QrInstance.start({facingMode:'environment'},{fps:10,qrbox:220},onScanSuccess).catch(()=>{
-      // ถ้าอุปกรณ์ไม่รองรับ facingMode (เช่นคอมพิวเตอร์ที่มีกล้องเดียว) ให้ fallback ไปเลือกจาก list กล้องที่มี
+    // qrbox ปรับตาม viewport — มือถือเล็กกว่า
+    const qrSize=Math.min(200, Math.floor(window.innerWidth*0.5));
+    const config={fps:10,qrbox:{width:qrSize,height:qrSize},aspectRatio:1.0};
+
+    // ลองกล้องหลัง (environment) ก่อน
+    html5QrInstance.start(
+      {facingMode:'environment'},config,onScanSuccess
+    ).then(()=>{
+      loadMsg.style.display='none';
+    }).catch(envErr=>{
+      console.warn('facingMode environment failed:',envErr);
+      // Fallback: ลองหากล้องที่มีทั้งหมด
       Html5Qrcode.getCameras().then(cams=>{
-        if(!cams||cams.length===0){ document.getElementById('scanLoadMsg').textContent='ไม่พบกล้อง — กรุณากรอก EQ No. ด้วยตนเอง'; document.getElementById('scanLoadMsg').style.display='flex'; return; }
-        html5QrInstance.start(cams[0].id,{fps:10,qrbox:220},onScanSuccess).catch(()=>{
-          document.getElementById('scanLoadMsg').textContent='เปิดกล้องไม่สำเร็จ — กรุณากรอก EQ No. ด้วยตนเอง'; document.getElementById('scanLoadMsg').style.display='flex';
+        if(!cams||cams.length===0){
+          loadMsg.textContent='❌ ไม่พบกล้อง — กรุณากรอก EQ No. ด้านล่าง';
+          loadMsg.style.display='flex';
+          return;
+        }
+        // ลองกล้องหลังก่อน (มักเป็นตัวสุดท้าย)
+        const backCam=cams.find(c=>/back|rear|environment/i.test(c.label))||cams[cams.length-1];
+        html5QrInstance.start(backCam.id,config,onScanSuccess).then(()=>{
+          loadMsg.style.display='none';
+        }).catch(camErr=>{
+          console.error('Camera start failed:',camErr);
+          loadMsg.innerHTML='❌ เปิดกล้องไม่สำเร็จ<br><span style="font-size:10px;color:#ff6d00;">'+escHtml(String(camErr))+'</span><br><span style="font-size:10px;">กรุณากรอก EQ No. ด้านล่างแทน</span>';
+          loadMsg.style.display='flex';
         });
-      }).catch(()=>{ document.getElementById('scanLoadMsg').textContent='ไม่ได้รับอนุญาตให้ใช้กล้อง — กรุณากรอก EQ No. ด้วยตนเอง'; document.getElementById('scanLoadMsg').style.display='flex'; });
+      }).catch(listErr=>{
+        console.error('getCameras failed:',listErr);
+        loadMsg.innerHTML='❌ ไม่ได้รับอนุญาตให้ใช้กล้อง<br><span style="font-size:10px;color:#ffb300;">กรุณากดอนุญาต (Allow) เมื่อเบราว์เซอร์ถาม<br>หรือเปิดสิทธิ์กล้องใน Settings ของเบราว์เซอร์</span>';
+        loadMsg.style.display='flex';
+      });
     });
   }
+
   if(window.Html5Qrcode) startScanner();
   else loadScript('https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js',startScanner);
 }
 function closeScanModal(){
   document.getElementById('scanModal').classList.remove('show');
-  if(html5QrInstance){ html5QrInstance.stop().catch(()=>{}); html5QrInstance.clear(); html5QrInstance=null; }
+  if(html5QrInstance){ try{ html5QrInstance.stop().catch(()=>{}); html5QrInstance.clear(); }catch(e){} html5QrInstance=null; }
+  document.getElementById('scanReader').innerHTML='';
 }
 function onScanSuccess(decodedText){
   const id=decodedText.replace(/^SCALM:/,'').trim();

@@ -6455,22 +6455,98 @@ function lookupAndShowInstrument(id){
   if(!row){ resEl.innerHTML=`<div class="alert-item alert-critical"><div class="alert-icon">❌</div><div class="alert-content"><div class="alert-title">ไม่พบ EQ No. ${escHtml(id)}</div><div class="alert-desc">กรุณาตรวจสอบ EQ No. อีกครั้ง</div></div></div>`; return; }
   const st=computeStatus(row);
   const badge=st==='เกินกำหนด'?`<span class="badge badge-red">🚨 เกินกำหนด</span>`:st==='ใกล้ครบ'?`<span class="badge badge-yellow">⏰ ใกล้ครบ</span>`:`<span class="badge badge-green">✓ ใช้งานได้</span>`;
-  resEl.innerHTML=`<div class="panel" style="margin-bottom:0;">
+
+  // ── ผลสอบเทียบล่าสุด ──
+  const calResult = row.calResult || row.result || '';
+  const resultBadge = calResult==='Pass'?'<span class="badge badge-green" style="font-size:13px;padding:5px 14px;">✅ Pass</span>'
+    :calResult==='Fail'?'<span class="badge badge-red" style="font-size:13px;padding:5px 14px;">❌ Fail</span>'
+    :'<span class="badge" style="background:rgba(255,255,255,0.08);color:var(--text-muted);font-size:13px;padding:5px 14px;">— ยังไม่มีผล</span>';
+
+  // ── ดึงประวัติ CalReq ──
+  const requests = getCalRequests().filter(r=>r.instrumentId===row.id).sort((a,b)=>(b.createdDate||'').localeCompare(a.createdDate||''));
+
+  let historyHtml = '';
+  if(requests.length > 0){
+    const receivingDocs=getReceivingDocs();
+    const returnDocs=getReturnDocs();
+    const maxShow = 5;
+    const showReqs = requests.slice(0, maxShow);
+    historyHtml = `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:12px;font-weight:800;color:var(--accent-cyan);margin-bottom:10px;">📜 ประวัติการสอบเทียบ (${requests.length} ครั้ง)</div>
+      ${showReqs.map(r=>{
+        const isClosed = !!r.returnedDate;
+        const result = r.calResult ? (r.calResult==='Pass'?'<span class="badge badge-green">Pass</span>':'<span class="badge badge-red">Fail</span>') : '<span style="color:var(--text-muted);">รอผล</span>';
+        const statusBg = isClosed ? 'rgba(0,200,83,0.06)' : 'rgba(255,179,0,0.06)';
+        const statusLabel = isClosed ? '<span class="badge badge-green" style="font-size:9px;">ปิดจบ</span>' : '<span class="badge badge-yellow" style="font-size:9px;">ดำเนินการ</span>';
+        let calBy = '';
+        if(r.resultRecordedBy) calBy = `โดย ${escHtml(r.resultRecordedBy)}`;
+        else if(r.pickedUpBy) calBy = `AWM: ${escHtml(r.pickedUpBy)}`;
+
+        return `<div style="background:${statusBg};border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:11px;font-weight:700;color:var(--text-primary);">${escHtml(r.id)} ${statusLabel}</span>
+            <span>${result}</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-secondary);line-height:1.7;">
+            ${r.createdDate ? `สร้างคำขอ: ${escHtml(r.createdDate)}` : ''}
+            ${r.calFinishDate ? ` · สอบเทียบเสร็จ: ${escHtml(r.calFinishDate)}` : ''}
+            ${r.returnedDate ? ` · คืนเครื่อง: ${escHtml(r.returnedDate)}` : ''}
+            ${calBy ? ` · ${calBy}` : ''}
+            ${r.certNo ? `<br>เลขที่ใบรับรอง: ${escHtml(r.certNo)}` : ''}
+            ${r.calResult==='Fail' && r.failReason ? `<br><span style="color:var(--accent-red);">เหตุผล: ${escHtml(r.failReason)}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+      ${requests.length > maxShow ? `<div style="text-align:center;font-size:11px;color:var(--text-muted);padding:4px;">... อีก ${requests.length-maxShow} รายการ — <a href="#" onclick="closeScanModal();document.getElementById('ihSearchInput').value='${escHtml(row.id)}';switchPage('insthistory',10);setTimeout(loadInstrumentHistory,150);return false;" style="color:var(--accent-cyan);">ดูประวัติทั้งหมด →</a></div>` : ''}
+    </div>`;
+  } else {
+    historyHtml = `<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:12px;font-weight:800;color:var(--accent-cyan);margin-bottom:8px;">📜 ประวัติการสอบเทียบ</div>
+      <div style="font-size:11px;color:var(--text-muted);text-align:center;padding:10px 0;">ยังไม่มีประวัติ Calibration Request</div>
+    </div>`;
+  }
+
+  resEl.innerHTML=`<div class="panel" style="margin-bottom:0;max-height:50vh;overflow-y:auto;">
     <div class="panel-body">
+      <!-- ── ข้อมูลเครื่องมือ ── -->
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-size:14px;font-weight:800;"><span class="inst-id">${escHtml(row.id)}</span> ${escHtml(row.name||'')}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${escHtml(row.brand||'')} ${escHtml(row.model||'')} &middot; ${escHtml(row.type||'–')}</div>
+          <div style="font-size:15px;font-weight:800;"><span class="inst-id">${escHtml(row.id)}</span> ${escHtml(row.name||'')}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${escHtml(row.brand||'')} ${escHtml(row.model||'')} · ${escHtml(row.type||'–')}</div>
         </div>
         ${badge}
       </div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:10px;line-height:1.7;">
-        สอบเทียบล่าสุด: ${escHtml(row.lastCal||'–')}<br>
-        ครบกำหนดถัดไป: ${escHtml(row.nextCal||'–')}<br>
-        ผู้รับผิดชอบ: ${escHtml(row.responsible||'ยังไม่มอบหมาย')} &middot; Owner: ${escHtml(row.lab||'–')}<br>
-        เลขที่ใบรับรอง: ${escHtml(row.certNo||'–')}
+
+      <!-- ── ผลสอบเทียบล่าสุด ── -->
+      <div style="margin-top:14px;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;">ผลสอบเทียบล่าสุด</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">
+            สอบเทียบ: ${escHtml(row.lastCal||'–')} · ครบกำหนด: ${escHtml(row.nextCal||'–')}
+          </div>
+        </div>
+        ${resultBadge}
       </div>
-      <div id="qrContextActions" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"></div>
+
+      <!-- ── รายละเอียด ── -->
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:12px;line-height:1.8;display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;">
+        <div>รอบสอบเทียบ: <strong style="color:var(--text-primary);">${escHtml(row.interval?row.interval+' เดือน':'–')}</strong></div>
+        <div>Owner: <strong style="color:var(--text-primary);">${escHtml(row.lab||'–')}</strong></div>
+        <div>ผู้รับผิดชอบ: <strong style="color:var(--text-primary);">${escHtml(row.responsible||'ยังไม่มอบหมาย')}</strong></div>
+        <div>เลขที่ใบรับรอง: <strong style="color:var(--text-primary);">${escHtml(row.certNo||'–')}</strong></div>
+        <div>พื้นที่/Measurement Range: <strong style="color:var(--text-primary);">${escHtml(row.range||'–')}</strong></div>
+        <div>หมายเหตุ: <strong style="color:var(--text-primary);">${escHtml(row.note||'–')}</strong></div>
+      </div>
+
+      <!-- ── ประวัติ ── -->
+      ${historyHtml}
+
+      <!-- ── Actions ── -->
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:12px;">
+        <button class="btn btn-outline btn-sm" onclick="closeScanModal();document.getElementById('ihSearchInput').value='${escHtml(row.id)}';switchPage('insthistory',10);setTimeout(loadInstrumentHistory,150);">📜 ดูประวัติเต็ม (Timeline)</button>
+        <button class="btn btn-outline btn-sm" onclick="showQR('${escHtml(row.id)}')">📱 QR Code</button>
+        <div id="qrContextActions" style="display:contents;"></div>
+      </div>
     </div>
   </div>`;
   renderQrContextActions(row.id);

@@ -2103,6 +2103,19 @@
   </div>
   <div style="margin-top:16px;">
     <div class="panel">
+      <div class="panel-header"><div class="panel-title">🎓 คุณวุฒิ AWM / Technician Competency (ISO 17025 §6.2)</div></div>
+      <div class="panel-body">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
+          กำหนดว่า AWM แต่ละคนได้รับอนุญาตสอบเทียบเครื่องมือประเภทใดบ้าง (Authorization Matrix) — ระบบจะตรวจสอบอัตโนมัติเมื่อมอบหมายงานให้ AWM
+        </div>
+        <div id="competencyMatrix"></div>
+        <button class="btn btn-outline" style="margin-top:8px;" onclick="renderCompetencyMatrix()">🔄 รีเฟรช</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="panel">
       <div class="panel-header"><div class="panel-title">🗄️ จัดการฐานข้อมูล</div></div>
       <div class="panel-body">
         <div id="settingsDbInfo" style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">กำลังโหลดข้อมูล...</div>
@@ -2620,6 +2633,7 @@
       <a href="#ug-planner" style="color:var(--accent-cyan);">3. สำหรับ LA-B Planner</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.10 แก้ไขข้อมูลเครื่องมือ (✏️ แก้ไข)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.11 เปลี่ยนสถานะวงจรชีวิตเครื่องมือ (🔄)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.12 กำหนดคุณวุฒิ AWM (🎓 Competency)</a>
       <a href="#ug-owner" style="color:var(--accent-cyan);">4. สำหรับ Owner</a>
       <a href="#ug-awm" style="color:var(--accent-cyan);">5. สำหรับ AWM (Aircraft Workshop Mechanic)</a>
       <a href="#ug-manager" style="color:var(--accent-cyan);">6. สำหรับ LA-B Manager</a>
@@ -2697,6 +2711,15 @@
       <p style="margin-top:6px;">ทุกครั้งที่เปลี่ยนสถานะ <strong>ต้องระบุเหตุผล</strong> (บังคับกรอก) — ระบบบันทึก Audit Log ทุกรายการ สืบค้นย้อนหลังได้ว่าใครเปลี่ยน เมื่อไหร่ จากอะไรเป็นอะไร เพราะอะไร</p>
       <p style="margin-top:6px;">เครื่องมือที่เปลี่ยนสถานะแล้วจะ <strong>ย้ายไปอยู่ในแท็บ "🚫 ยกเลิก/ไม่ใช้งาน"</strong> แยกจากเครื่องมือที่ใช้งานอยู่ และ <strong>ไม่นับรวม</strong> ในจำนวนเกินกำหนด/ใกล้ครบบน Dashboard</p>
       <p style="margin-top:6px;">สามารถ <strong>คืนสถานะกลับเป็นปกติ</strong> ได้ (เลือก "✅ ใช้งานปกติ") เครื่องมือจะย้ายกลับไปแท็บ "ใช้งานอยู่" อัตโนมัติ</p>
+      <div class="section-div">3.12 กำหนดคุณวุฒิ AWM / Technician Competency (🎓)</div>
+      <p>ไปที่หน้า <strong>"ตั้งค่า"</strong> → panel <strong>"🎓 คุณวุฒิ AWM"</strong> จะเห็นตาราง Authorization Matrix แสดง AWM ทุกคน × ประเภทเครื่องมือทั้งหมด → <strong>ติ๊กเครื่องหมายถูก</strong> ที่ประเภทเครื่องมือที่ AWM แต่ละคนได้รับอนุญาตสอบเทียบ + กรอก <strong>วันหมดอายุใบอนุญาต</strong> และ <strong>เลขที่ใบอนุญาต</strong></p>
+      <p style="margin-top:6px;">เมื่อตั้งค่าแล้ว ระบบจะ <strong>ตรวจสอบอัตโนมัติ</strong> ทุกครั้งที่มอบหมาย AWM เบิกเครื่องมือ:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li>✅ หน้าชื่อ AWM ในเมนู dropdown จะแสดง <strong>✅</strong> (คุณวุฒิตรง) หรือ <strong>⚠️</strong> (ไม่ตรง/หมดอายุ)</li>
+        <li>⚠️ ถ้ามอบหมาย AWM ที่คุณวุฒิไม่ตรง → เตือน confirm + บันทึกไว้ใน Audit Log ว่ามี Override</li>
+        <li>🚫 ถ้าใบอนุญาตหมดอายุ → เตือนให้ต่ออายุก่อนมอบหมาย</li>
+        <li>🔓 ถ้ายังไม่ได้ตั้งค่าคุณวุฒิให้ AWM คนใด → ระบบข้ามการตรวจสอบ (ไม่บล็อกการทำงาน)</li>
+      </ul>
     </div>
   </div>
 
@@ -3310,7 +3333,7 @@ function switchPage(id, idx){
   if(id==='today')      renderTodayPage();
   if(id==='alerts'){ runNotificationCheck(); renderAuditTrail(); }
   if(id==='report'){ renderHistorySummary(); renderHistoryTable(); refreshReportKpis(); renderHistoryAnalytics(); }
-  if(id==='settings')   refreshSettingsDbInfo();
+  if(id==='settings')   { refreshSettingsDbInfo(); renderCompetencyMatrix(); }
   if(id==='calreq')     renderCalReqPage();
   if(id==='manual')     renderManualPage();
   if(id==='insthistory') renderInstrumentHistoryPage();
@@ -5161,23 +5184,98 @@ function renderReceivingSection(){
   if(pickupTbody){
     const pickupable=getCalRequests().filter(r=>r.received && !r.returnedDate && !r.pickedUpBy);
     const techUsers=getUsers().filter(u=>u.role==='tech');
+    const comp=getCompetencies();
     if(pickupable.length===0){ pickupTbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px;">ไม่มีรายการรอเบิก</td></tr>`; }
     else{
-      pickupTbody.innerHTML=pickupable.map(r=>`<tr>
+      pickupTbody.innerHTML=pickupable.map(r=>{
+        const instType=r.instrumentType||'';
+        const techOpts=techUsers.map(u=>{
+          const chk=checkTechCompetency(u.username, instType);
+          const indicator=chk.ok?'✅':'⚠️';
+          return `<option value="${escHtml(u.username)}">${indicator} ${escHtml(u.displayName||u.username)}</option>`;
+        }).join('');
+        return `<tr>
         <td><span class="inst-id">${escHtml(r.instrumentId)}</span></td>
         <td>${escHtml(r.instrumentName||'–')}</td>
         <td>${escHtml(r.storageLocation||'–')}</td>
         <td>
           <select class="form-input" id="pickupTech_${r.id}" style="width:auto;">
             <option value="">— เลือก AWM —</option>
-            ${techUsers.map(u=>`<option value="${escHtml(u.username)}">${escHtml(u.displayName||u.username)}</option>`).join('')}
+            ${techOpts}
           </select>
         </td>
         <td>${todayThaiDateLabel()} <span style="color:var(--text-muted);font-size:10px;">(อัตโนมัติ)</span></td>
         <td><button class="btn btn-primary btn-sm" onclick="withdrawInstrument('${r.id}')">🔧 เบิกเครื่องมือ</button></td>
-      </tr>`).join('');
+      </tr>`;}).join('');
     }
   }
+
+// ════════════════════════════════════════════════════════════
+// TECHNICIAN COMPETENCY TRACKING — คุณวุฒิ AWM (ISO 17025 §6.2)
+// ════════════════════════════════════════════════════════════
+const COMPETENCY_KEY='scalmCompetencies';
+function getCompetencies(){ try{return JSON.parse(localStorage.getItem(COMPETENCY_KEY)||'{}');}catch{return {};} }
+function saveCompetencies(data){ safeSetItem(COMPETENCY_KEY, JSON.stringify(data)); }
+
+function getInstrumentTypes(){
+  const db=getDB();
+  const types=new Set();
+  db.forEach(r=>{ if(r.type) types.add(r.type); });
+  return [...types].sort();
+}
+
+function renderCompetencyMatrix(){
+  const el=document.getElementById('competencyMatrix'); if(!el) return;
+  const techs=getUsers().filter(u=>u.role==='tech');
+  const types=getInstrumentTypes();
+  const comp=getCompetencies();
+  if(techs.length===0){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px;">ไม่มีผู้ใช้บทบาท AWM ในระบบ</div>'; return; }
+  if(types.length===0){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px;">ไม่มีข้อมูลประเภทเครื่องมือ — กรุณานำเข้าข้อมูลก่อน</div>'; return; }
+
+  let html=`<div style="overflow-x:auto;"><table class="cal-table" style="font-size:11px;">
+    <thead><tr><th style="min-width:130px;">AWM</th>${types.map(t=>`<th style="text-align:center;min-width:60px;font-size:10px;writing-mode:vertical-lr;height:80px;">${escHtml(t)}</th>`).join('')}<th style="min-width:100px;">วันหมดอายุ</th><th style="min-width:80px;">เลขที่ใบอนุญาต</th><th></th></tr></thead><tbody>`;
+  techs.forEach(tech=>{
+    const tc=comp[tech.username]||{types:[],expiryDate:'',certNo:''};
+    html+=`<tr>
+      <td style="font-weight:700;">${escHtml(tech.displayName||tech.username)}</td>
+      ${types.map(t=>`<td style="text-align:center;">
+        <input type="checkbox" class="comp-chk" data-user="${escHtml(tech.username)}" data-type="${escHtml(t)}" ${tc.types.includes(t)?'checked':''} onchange="updateCompetency()">
+      </td>`).join('')}
+      <td><input class="form-input comp-expiry" data-user="${escHtml(tech.username)}" type="date" value="${escHtml(tc.expiryDate||'')}" style="width:auto;font-size:11px;" onchange="updateCompetency()"></td>
+      <td><input class="form-input comp-cert" data-user="${escHtml(tech.username)}" value="${escHtml(tc.certNo||'')}" style="width:80px;font-size:11px;" placeholder="เลขที่" onchange="updateCompetency()"></td>
+      <td>${tc.expiryDate&&new Date(tc.expiryDate)<new Date()?'<span class="badge badge-red" style="font-size:9px;">หมดอายุ</span>':tc.expiryDate&&(new Date(tc.expiryDate)-new Date())<30*86400000?'<span class="badge badge-yellow" style="font-size:9px;">ใกล้หมดอายุ</span>':tc.types.length>0?'<span class="badge badge-green" style="font-size:9px;">ปกติ</span>':'<span class="badge badge-gray" style="font-size:9px;">ยังไม่กำหนด</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  el.innerHTML=html;
+}
+
+function updateCompetency(){
+  const comp=getCompetencies();
+  const techs=getUsers().filter(u=>u.role==='tech');
+  techs.forEach(tech=>{
+    const chks=[...document.querySelectorAll(`.comp-chk[data-user="${tech.username}"]:checked`)];
+    const expiry=document.querySelector(`.comp-expiry[data-user="${tech.username}"]`);
+    const cert=document.querySelector(`.comp-cert[data-user="${tech.username}"]`);
+    comp[tech.username]={
+      types: chks.map(c=>c.dataset.type),
+      expiryDate: expiry?expiry.value:'',
+      certNo: cert?cert.value.trim():'',
+    };
+  });
+  saveCompetencies(comp);
+  renderCompetencyMatrix();
+}
+
+function checkTechCompetency(username, instrumentType){
+  const comp=getCompetencies();
+  const tc=comp[username];
+  if(!tc || tc.types.length===0) return {ok:true, reason:'ยังไม่ได้กำหนดคุณวุฒิ (ระบบข้ามการตรวจสอบ)'}; // ถ้ายังไม่ได้ setup ให้ผ่าน
+  const typeMatch=tc.types.some(t=>t.toLowerCase()===String(instrumentType||'').toLowerCase());
+  if(!typeMatch) return {ok:false, reason:`AWM ไม่ได้รับอนุญาตสอบเทียบประเภท "${instrumentType}"\nประเภทที่ได้รับอนุญาต: ${tc.types.join(', ')||'ไม่มี'}`};
+  if(tc.expiryDate && new Date(tc.expiryDate)<new Date()) return {ok:false, reason:`ใบอนุญาตของ AWM หมดอายุแล้ว (${tc.expiryDate})\nกรุณาต่ออายุก่อนมอบหมายงาน`};
+  return {ok:true, reason:''};
+}
 
 // ════════════════════════════════════════════════════════════
 // ENVIRONMENTAL CONDITIONS — ประเภทเครื่องมือที่ควรบันทึกสภาวะแวดล้อม
@@ -5385,11 +5483,19 @@ function withdrawInstrument(id){
   const techUser=getUsers().find(u=>u.username===techUsername);
   const list=getCalRequests();
   const idx=list.findIndex(r=>r.id===id); if(idx<0) return;
+  // ── Competency Check (ISO 17025 §6.2) ──
+  const instType=list[idx].instrumentType||'';
+  const compCheck=checkTechCompetency(techUsername, instType);
+  if(!compCheck.ok){
+    if(!confirm(`⚠ Competency Warning (ISO 17025 §6.2)\n\n${compCheck.reason}\n\nกด OK เพื่อมอบหมายต่อ (บันทึกไว้ใน Audit Log)\nกด Cancel เพื่อเลือก AWM คนอื่น`)) return;
+    logAudit(list[idx].instrumentId, `⚠ Competency Override — AWM ${techUser?(techUser.displayName||techUsername):techUsername} ถูกมอบหมายงานประเภท "${instType}" แม้ไม่ตรงคุณวุฒิ: ${compCheck.reason}`);
+  }
   list[idx].pickedUpBy=techUser?(techUser.displayName||techUser.username):techUsername;
   list[idx].pickedUpByUsername=techUsername;
-  list[idx].pickupDate=todayThaiDateLabel(); // "วันที่เริ่ม Cal." = วันที่เบิกเครื่องมือ เติมอัตโนมัติ แก้ไม่ได้
+  list[idx].pickupDate=todayThaiDateLabel();
+  list[idx].competencyCheck={ok:compCheck.ok, reason:compCheck.reason, checkedAt:new Date().toISOString()};
   saveCalRequests(list);
-  logAudit(list[idx].instrumentId, `AWM ${list[idx].pickedUpBy} เบิกเครื่องมือเพื่อสอบเทียบ — วันที่เริ่ม Cal.: ${list[idx].pickupDate}`);
+  logAudit(list[idx].instrumentId, `AWM ${list[idx].pickedUpBy} เบิกเครื่องมือเพื่อสอบเทียบ — วันที่เริ่ม Cal.: ${list[idx].pickupDate}${compCheck.ok?' — คุณวุฒิตรง ✅':' — ⚠ คุณวุฒิไม่ตรง (override)'}`);
   renderCalReqPage();
   showToast('save',`บันทึกการเบิกเครื่องมือแล้ว — วันที่เริ่ม Cal.: ${list[idx].pickupDate}`);
 }

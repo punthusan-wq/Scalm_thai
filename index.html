@@ -2122,6 +2122,32 @@
 
   <div style="margin-top:16px;">
     <div class="panel">
+      <div class="panel-header"><div class="panel-title">📋 คลัง SOP สอบเทียบ / Calibration Procedure Library (ISO 17025 §7.2)</div></div>
+      <div class="panel-body">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
+          กำหนด link SOP/WI สำหรับแต่ละประเภทเครื่องมือ — ระบบจะลิงก์กับ CalRequest อัตโนมัติ AWM เปิดดูขั้นตอนได้จากหน้างาน
+        </div>
+        <div id="sopLibraryPanel"></div>
+        <button class="btn btn-outline" style="margin-top:8px;" onclick="renderSOPLibrary()">🔄 รีเฟรช</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="panel">
+      <div class="panel-header"><div class="panel-title">⚠️ Risk Matrix / ระดับความเสี่ยง (AS9100D §6.1)</div></div>
+      <div class="panel-body">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
+          กำหนด Criticality (ความสำคัญ) และ Impact (ผลกระทบ) ต่อประเภทเครื่องมือ — Likelihood คำนวณจากประวัติ Fail อัตโนมัติ
+        </div>
+        <div id="riskMatrixPanel"></div>
+        <button class="btn btn-outline" style="margin-top:8px;" onclick="renderRiskMatrix()">🔄 รีเฟรช</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="panel">
       <div class="panel-header"><div class="panel-title">🗄️ จัดการฐานข้อมูล</div></div>
       <div class="panel-body">
         <div id="settingsDbInfo" style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">กำลังโหลดข้อมูล...</div>
@@ -2644,6 +2670,9 @@
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.13 Archive ข้อมูลเก่า (📦)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.14 แนบลิงก์เอกสาร/ใบรับรอง (📎)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.15 ติดตั้ง SCALM เป็น App (PWA)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.16 คลัง SOP สอบเทียบ (📋 Procedure Library)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.17 Risk Matrix (⚠️ ระดับความเสี่ยง)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.18 Drift Analysis (📊 วิเคราะห์แนวโน้ม)</a>
       <a href="#ug-owner" style="color:var(--accent-cyan);">4. สำหรับ Owner</a>
       <a href="#ug-awm" style="color:var(--accent-cyan);">5. สำหรับ AWM (Aircraft Workshop Mechanic)</a>
       <a href="#ug-manager" style="color:var(--accent-cyan);">6. สำหรับ LA-B Manager</a>
@@ -2751,6 +2780,28 @@
         <li><strong>iPhone (Safari):</strong> เปิด SCALM ใน Safari → กดปุ่มแชร์ (📤) ด้านล่าง → เลือก "Add to Home Screen" → กด Add</li>
       </ul>
       <p style="margin-top:6px;">จากนั้นจะมี icon SCALM ที่หน้าจอมือถือ กดเปิดได้เลยเหมือน app ทั่วไป เปิดเต็มจอโดยไม่มี address bar</p>
+      <div class="section-div">3.16 คลัง SOP สอบเทียบ / Calibration Procedure Library (📋)</div>
+      <p>ไปที่ <strong>"ตั้งค่า" → "📋 คลัง SOP สอบเทียบ"</strong> → ตารางแสดงประเภทเครื่องมือทั้งหมด → กรอกข้อมูลทีละประเภท:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li><strong>ชื่อ SOP/WI:</strong> เช่น WI-CAL-TQ-001</li>
+        <li><strong>Link:</strong> วาง URL ของไฟล์ SOP ใน Google Drive</li>
+        <li><strong>เวอร์ชัน:</strong> เช่น Rev.3</li>
+        <li><strong>วันที่อัพเดท:</strong> วันที่ SOP เวอร์ชันนี้มีผลบังคับใช้</li>
+      </ul>
+      <p style="margin-top:6px;">เมื่อตั้งค่าแล้ว ทุก CalRequest ของประเภทนั้นจะแสดงปุ่ม <strong>"📋 SOP"</strong> ให้ AWM กดดูขั้นตอนได้ทันที ไม่ต้องหาไฟล์เอง บันทึกอัตโนมัติทุกครั้งที่แก้ไข</p>
+
+      <div class="section-div">3.17 Risk Matrix / ระดับความเสี่ยง (⚠️)</div>
+      <p>ไปที่ <strong>"ตั้งค่า" → "⚠️ Risk Matrix"</strong> → ให้คะแนนต่อประเภทเครื่องมือ:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li><strong>Criticality (1-5):</strong> ความสำคัญต่อความปลอดภัยการบิน (5 = สำคัญมาก เช่น Torque Wrench เครื่องยนต์)</li>
+        <li><strong>Impact (1-5):</strong> ผลกระทบถ้าเครื่องมือวัดผิดพลาด (5 = อาจเกิดอุบัติเหตุ)</li>
+        <li><strong>Likelihood:</strong> ระบบคำนวณอัตโนมัติจากประวัติ Fail (ยิ่ง Fail บ่อย = ยิ่งสูง)</li>
+      </ul>
+      <p style="margin-top:6px;">Risk Score = Criticality × Impact × Likelihood → แสดงระดับ สูง/กลาง/ต่ำ ใน CalRequest card ทุกรายการ เพื่อให้ LA-B Planner จัดลำดับความสำคัญในการสอบเทียบ</p>
+
+      <div class="section-div">3.18 Drift Analysis / วิเคราะห์แนวโน้มค่าเบี่ยงเบน (📊)</div>
+      <p>ที่หน้า <strong>"ประวัติเครื่องมือ"</strong> กดปุ่ม <strong>"📊 Drift Analysis"</strong> → ระบบดึงผลสอบเทียบย้อนหลังทุกรอบของเครื่องมือตัวนั้นมาพล็อตกราฟ แสดงแนวโน้ม (trend line) ว่าค่าเบี่ยงเบนเพิ่มขึ้นหรือลดลง พร้อมแนะนำว่าควรปรับรอบสอบเทียบหรือไม่</p>
+      <p style="margin-top:6px;">ต้องมีผลสอบเทียบอย่างน้อย <strong>2 รอบ</strong> ถึงจะวิเคราะห์ได้ — ยิ่งมีหลายรอบยิ่งแม่นยำ ผู้ใช้ไม่ต้องทำอะไรเพิ่ม ระบบใช้ข้อมูลที่บันทึกอยู่แล้ว</p>
     </div>
   </div>
 
@@ -3364,7 +3415,7 @@ function switchPage(id, idx){
   if(id==='today')      renderTodayPage();
   if(id==='alerts'){ runNotificationCheck(); renderAuditTrail(); }
   if(id==='report'){ renderHistorySummary(); renderHistoryTable(); refreshReportKpis(); renderHistoryAnalytics(); }
-  if(id==='settings')   { refreshSettingsDbInfo(); renderCompetencyMatrix(); }
+  if(id==='settings')   { refreshSettingsDbInfo(); renderCompetencyMatrix(); renderSOPLibrary(); renderRiskMatrix(); }
   if(id==='calreq')     renderCalReqPage();
   if(id==='manual')     renderManualPage();
   if(id==='insthistory') renderInstrumentHistoryPage();
@@ -4305,6 +4356,7 @@ function loadInstrumentHistory(){
       <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
         ${can('editInst')?`<button class="btn btn-outline btn-sm" onclick="openNextCalOverride('${escHtml(row.id)}')">📅 แก้ไขครบกำหนดเอง</button>`:''}
         <button class="btn btn-outline btn-sm" onclick="showTraceabilityChain('${escHtml(row.id)}')">🔗 Traceability Chain</button>
+        <button class="btn btn-outline btn-sm" onclick="showDriftAnalysis('${escHtml(row.id)}')">📊 Drift Analysis</button>
       </div>
     </div>
   </div>`;
@@ -4347,7 +4399,17 @@ function renderInstrumentTimelineCard(r, receivingDocs, returnDocs){
       <div class="panel-body" style="padding:8px 16px;">${steps.join('')}</div>
     </div>`;
   }
-  steps.push(ihStep('📝','สร้างคำขอ', r.createdDate, r.createdBy, `เหตุผล: ${formatReason(r)}${r.initiatedByOwner?' (Owner แจ้งขอด่วนเอง)':''}`));
+  // SOP + Risk info
+  const sopInfo=getSOPForType(r.instrumentType||'');
+  const riskData=getRiskMatrix()[r.instrumentType||''];
+  const likelihood=calcLikelihood(r.instrumentType||'');
+  const riskScore=(riskData?.criticality||3)*(riskData?.impact||3)*likelihood;
+  const rl=getRiskLevel(riskScore);
+  let sopRiskExtra='';
+  if(sopInfo&&sopInfo.link) sopRiskExtra+=`<a href="${escHtml(sopInfo.link)}" target="_blank" class="btn btn-outline btn-sm" style="margin-right:4px;">📋 SOP: ${escHtml(sopInfo.name||sopInfo.version||'ดูขั้นตอน')}</a>`;
+  sopRiskExtra+=`<span class="badge ${rl.badge}" style="font-size:10px;">Risk: ${rl.label} (${riskScore})</span>`;
+
+  steps.push(ihStep('📝','สร้างคำขอ', r.createdDate, r.createdBy, `เหตุผล: ${formatReason(r)}${r.initiatedByOwner?' (Owner แจ้งขอด่วนเอง)':''}<div style="margin-top:4px;">${sopRiskExtra}</div>`));
   if(r.ownerRespondedBy){
     steps.push(ihStep('✅','Owner ยอมรับ', null, r.ownerRespondedBy, `วันนัดส่งที่ตกลง: ${escHtml(r.ownerDeliveryDate||'-')} &middot; Adjustment Permission: ${escHtml(r.adjustmentPermission||'-')}`));
   }
@@ -5308,6 +5370,196 @@ function checkTechCompetency(username, instrumentType){
   if(!typeMatch) return {ok:false, reason:`AWM ไม่ได้รับอนุญาตสอบเทียบประเภท "${instrumentType}"\nประเภทที่ได้รับอนุญาต: ${tc.types.join(', ')||'ไม่มี'}`};
   if(tc.expiryDate && new Date(tc.expiryDate)<new Date()) return {ok:false, reason:`ใบอนุญาตของ AWM หมดอายุแล้ว (${tc.expiryDate})\nกรุณาต่ออายุก่อนมอบหมายงาน`};
   return {ok:true, reason:''};
+}
+
+// ════════════════════════════════════════════════════════════
+// SOP LIBRARY — คลังขั้นตอนสอบเทียบ (ISO 17025 §7.2)
+// ════════════════════════════════════════════════════════════
+const SOP_KEY='scalmSOPLibrary';
+function getSOPLibrary(){ try{return JSON.parse(localStorage.getItem(SOP_KEY)||'{}');}catch{return {};} }
+function saveSOPLibrary(data){ safeSetItem(SOP_KEY, JSON.stringify(data)); }
+
+function renderSOPLibrary(){
+  const el=document.getElementById('sopLibraryPanel'); if(!el) return;
+  const types=getInstrumentTypes();
+  const sops=getSOPLibrary();
+  if(types.length===0){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px;">ไม่มีข้อมูลประเภทเครื่องมือ</div>'; return; }
+  let html=`<table class="cal-table" style="font-size:12px;"><thead><tr><th>ประเภท</th><th>ชื่อ SOP / WI</th><th>Link (Google Drive / URL)</th><th>เวอร์ชัน</th><th>วันที่อัพเดท</th><th>สถานะ</th></tr></thead><tbody>`;
+  types.forEach(t=>{
+    const s=sops[t]||{name:'',link:'',version:'',updatedDate:''};
+    html+=`<tr>
+      <td style="font-weight:500;">${escHtml(t)}</td>
+      <td><input class="form-input sop-name" data-type="${escHtml(t)}" value="${escHtml(s.name)}" placeholder="เช่น WI-CAL-TQ-001" style="width:140px;font-size:11px;" onchange="updateSOPLibrary()"></td>
+      <td><input class="form-input sop-link" data-type="${escHtml(t)}" value="${escHtml(s.link)}" placeholder="https://drive.google.com/..." style="width:200px;font-size:11px;" type="url" onchange="updateSOPLibrary()"></td>
+      <td><input class="form-input sop-ver" data-type="${escHtml(t)}" value="${escHtml(s.version)}" placeholder="Rev.3" style="width:60px;font-size:11px;" onchange="updateSOPLibrary()"></td>
+      <td><input class="form-input sop-date" data-type="${escHtml(t)}" value="${escHtml(s.updatedDate)}" type="date" style="width:auto;font-size:11px;" onchange="updateSOPLibrary()"></td>
+      <td>${s.link?'<span class="badge badge-green" style="font-size:9px;">Active</span>':'<span class="badge badge-gray" style="font-size:9px;">ยังไม่ตั้งค่า</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  el.innerHTML=html;
+}
+
+function updateSOPLibrary(){
+  const sops=getSOPLibrary();
+  const types=getInstrumentTypes();
+  types.forEach(t=>{
+    const name=document.querySelector(`.sop-name[data-type="${t}"]`);
+    const link=document.querySelector(`.sop-link[data-type="${t}"]`);
+    const ver=document.querySelector(`.sop-ver[data-type="${t}"]`);
+    const date=document.querySelector(`.sop-date[data-type="${t}"]`);
+    sops[t]={name:name?name.value.trim():'', link:link?link.value.trim():'', version:ver?ver.value.trim():'', updatedDate:date?date.value:''};
+  });
+  saveSOPLibrary(sops);
+  renderSOPLibrary();
+}
+
+function getSOPForType(instType){
+  const sops=getSOPLibrary();
+  return sops[instType]||null;
+}
+
+// ════════════════════════════════════════════════════════════
+// RISK MATRIX — การประเมินความเสี่ยง (AS9100D §6.1)
+// ════════════════════════════════════════════════════════════
+const RISK_KEY='scalmRiskMatrix';
+function getRiskMatrix(){ try{return JSON.parse(localStorage.getItem(RISK_KEY)||'{}');}catch{return {};} }
+function saveRiskMatrix(data){ safeSetItem(RISK_KEY, JSON.stringify(data)); }
+
+function calcLikelihood(instType){
+  const reqs=getCalRequests();
+  const typeReqs=reqs.filter(r=>(r.instrumentType||'').toLowerCase()===instType.toLowerCase()&&r.calResult);
+  if(typeReqs.length<3) return 1;
+  const fails=typeReqs.filter(r=>r.calResult==='Fail').length;
+  const rate=fails/typeReqs.length;
+  if(rate>=0.3) return 5;
+  if(rate>=0.2) return 4;
+  if(rate>=0.1) return 3;
+  if(rate>=0.05) return 2;
+  return 1;
+}
+
+function getRiskLevel(score){
+  if(score>=50) return {level:'High',badge:'badge-red',label:'สูง'};
+  if(score>=20) return {level:'Medium',badge:'badge-yellow',label:'กลาง'};
+  return {level:'Low',badge:'badge-green',label:'ต่ำ'};
+}
+
+function renderRiskMatrix(){
+  const el=document.getElementById('riskMatrixPanel'); if(!el) return;
+  const types=getInstrumentTypes();
+  const risk=getRiskMatrix();
+  if(types.length===0){ el.innerHTML='<div style="color:var(--text-muted);font-size:12px;">ไม่มีข้อมูลประเภทเครื่องมือ</div>'; return; }
+  let html=`<table class="cal-table" style="font-size:12px;"><thead><tr><th>ประเภท</th><th>Criticality (1-5)</th><th>Impact (1-5)</th><th>Likelihood (auto)</th><th>Risk Score</th><th>ระดับ</th></tr></thead><tbody>`;
+  const scores=[];
+  types.forEach(t=>{
+    const r=risk[t]||{criticality:3,impact:3};
+    const likelihood=calcLikelihood(t);
+    const score=(r.criticality||3)*(r.impact||3)*likelihood;
+    const rl=getRiskLevel(score);
+    scores.push({type:t,score,level:rl});
+    html+=`<tr>
+      <td style="font-weight:500;">${escHtml(t)}</td>
+      <td><input class="form-input risk-crit" data-type="${escHtml(t)}" type="number" min="1" max="5" value="${r.criticality||3}" style="width:50px;font-size:12px;text-align:center;" onchange="updateRiskMatrix()"></td>
+      <td><input class="form-input risk-impact" data-type="${escHtml(t)}" type="number" min="1" max="5" value="${r.impact||3}" style="width:50px;font-size:12px;text-align:center;" onchange="updateRiskMatrix()"></td>
+      <td style="text-align:center;">${likelihood}</td>
+      <td style="text-align:center;font-weight:700;">${score}</td>
+      <td><span class="badge ${rl.badge}">${rl.label} (${rl.level})</span></td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  // เรียงลำดับ Risk สูงสุด
+  scores.sort((a,b)=>b.score-a.score);
+  if(scores.length>0&&scores[0].score>=20){
+    html+=`<div style="margin-top:10px;padding:8px 12px;background:var(--bg-danger);border-radius:8px;font-size:12px;color:var(--text-danger);">⚠ ประเภทเครื่องมือที่ต้องให้ความสำคัญ: ${scores.filter(s=>s.score>=20).map(s=>`<strong>${escHtml(s.type)}</strong> (${s.score})`).join(', ')}</div>`;
+  }
+  el.innerHTML=html;
+}
+
+function updateRiskMatrix(){
+  const risk=getRiskMatrix();
+  const types=getInstrumentTypes();
+  types.forEach(t=>{
+    const crit=document.querySelector(`.risk-crit[data-type="${t}"]`);
+    const impact=document.querySelector(`.risk-impact[data-type="${t}"]`);
+    risk[t]={criticality:crit?parseInt(crit.value)||3:3, impact:impact?parseInt(impact.value)||3:3};
+  });
+  saveRiskMatrix(risk);
+  renderRiskMatrix();
+}
+
+// ════════════════════════════════════════════════════════════
+// DRIFT ANALYSIS — วิเคราะห์แนวโน้มค่าเบี่ยงเบน (ISO 17025 §7.7)
+// ════════════════════════════════════════════════════════════
+function showDriftAnalysis(eqId){
+  const reqs=getCalRequests();
+  const history=reqs.filter(r=>String(r.instrumentId).toUpperCase()===String(eqId).toUpperCase()&&r.calFinishDate&&r.measuredValue).sort((a,b)=>(a.calFinishDate||'').localeCompare(b.calFinishDate||''));
+  if(history.length<2){ showToast('critical',`ต้องมีผลสอบเทียบอย่างน้อย 2 รอบ ตอนนี้มี ${history.length} รอบ`); return; }
+  const db=getDB();
+  const inst=db.find(r=>String(r.id).toUpperCase()===eqId.toUpperCase());
+  const points=history.map((r,i)=>({
+    date:r.calFinishDate,
+    value:parseFloat(r.measuredValue)||0,
+    u:parseFloat(r.uncertaintyU)||0,
+    result:r.calResult,
+    idx:i,
+  }));
+  // Trend calculation
+  const n=points.length;
+  const xArr=points.map((_,i)=>i);
+  const yArr=points.map(p=>p.value);
+  const xMean=xArr.reduce((a,b)=>a+b,0)/n;
+  const yMean=yArr.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(xArr[i]-xMean)*(yArr[i]-yMean);den+=(xArr[i]-xMean)**2;}
+  const slope=den?num/den:0;
+  const trendDirection=Math.abs(slope)<0.001?'คงที่':slope>0?'เพิ่มขึ้น (drift up)':'ลดลง (drift down)';
+  const trendColor=Math.abs(slope)<0.001?'var(--text-success)':Math.abs(slope)>0.05?'var(--text-danger)':'var(--text-warning)';
+  // Interval recommendation
+  const failRate=points.filter(p=>p.result==='Fail').length/n;
+  const intervalRec=failRate>=0.2?'สั้นลง (fail rate สูง)':Math.abs(slope)<0.001&&failRate===0?'อาจยืดได้ (stable + no fail)':'คงเดิม';
+  // Build chart
+  const yMin=Math.min(...yArr)-Math.max(...points.map(p=>p.u),0.1);
+  const yMax=Math.max(...yArr)+Math.max(...points.map(p=>p.u),0.1);
+  const chartW=420,chartH=180,padL=50,padB=40;
+  const scaleX=(i)=>padL+i*(chartW-padL)/(n-1||1);
+  const scaleY=(v)=>chartH-padB-(v-yMin)/(yMax-yMin||1)*(chartH-padB-20);
+  let pathD=points.map((p,i)=>`${i===0?'M':'L'}${scaleX(i).toFixed(1)} ${scaleY(p.value).toFixed(1)}`).join(' ');
+  // Trend line
+  const trendY0=yMean-slope*xMean;
+  const trendLine=`M${scaleX(0).toFixed(1)} ${scaleY(trendY0).toFixed(1)} L${scaleX(n-1).toFixed(1)} ${scaleY(trendY0+slope*(n-1)).toFixed(1)}`;
+
+  let chartSvg=`<svg viewBox="0 0 ${chartW} ${chartH+30}" style="width:100%;max-width:440px;">
+    <line x1="${padL}" y1="${chartH-padB}" x2="${chartW}" y2="${chartH-padB}" stroke="var(--border)" stroke-width="0.5"/>
+    <line x1="${padL}" y1="20" x2="${padL}" y2="${chartH-padB}" stroke="var(--border)" stroke-width="0.5"/>
+    <text x="${padL-4}" y="${scaleY(yMax)}" text-anchor="end" style="font-size:10px;" fill="var(--text-muted)">${yMax.toFixed(2)}</text>
+    <text x="${padL-4}" y="${scaleY(yMin)}" text-anchor="end" style="font-size:10px;" fill="var(--text-muted)">${yMin.toFixed(2)}</text>
+    <path d="${pathD}" fill="none" stroke="var(--text-accent)" stroke-width="2"/>
+    <path d="${trendLine}" fill="none" stroke="${trendColor}" stroke-width="1.5" stroke-dasharray="6 3"/>`;
+  points.forEach((p,i)=>{
+    chartSvg+=`<circle cx="${scaleX(i).toFixed(1)}" cy="${scaleY(p.value).toFixed(1)}" r="4" fill="${p.result==='Fail'?'var(--text-danger)':'var(--text-success)'}" stroke="var(--surface-2)" stroke-width="1.5"/>`;
+    if(p.u>0){
+      chartSvg+=`<line x1="${scaleX(i).toFixed(1)}" y1="${scaleY(p.value-p.u).toFixed(1)}" x2="${scaleX(i).toFixed(1)}" y2="${scaleY(p.value+p.u).toFixed(1)}" stroke="var(--text-muted)" stroke-width="1" opacity="0.5"/>`;
+    }
+    chartSvg+=`<text x="${scaleX(i).toFixed(1)}" y="${chartH-padB+16}" text-anchor="middle" style="font-size:9px;" fill="var(--text-muted)">${(p.date||'').slice(0,10)}</text>`;
+  });
+  chartSvg+=`</svg>`;
+
+  const modal=document.createElement('div');
+  modal.className='modal-overlay show';
+  modal.id='driftModal';
+  modal.innerHTML=`<div class="modal-card" style="max-width:500px;"><div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;">📊 Drift Analysis — ${escHtml(eqId)}</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${escHtml(inst?.name||'')} · ${n} รอบสอบเทียบ</div>
+    ${chartSvg}
+    <div style="margin-top:12px;font-size:13px;line-height:1.8;">
+      <div>แนวโน้ม: <strong style="color:${trendColor};">${trendDirection}</strong> (slope: ${slope.toFixed(4)} ต่อรอบ)</div>
+      <div>Fail rate: <strong>${(failRate*100).toFixed(0)}%</strong> (${points.filter(p=>p.result==='Fail').length}/${n})</div>
+      <div>แนะนำรอบสอบเทียบ: <strong>${intervalRec}</strong></div>
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">🟢 = Pass 🔴 = Fail เส้นประ = แนวโน้ม (trend line) แท่งแนวตั้ง = Uncertainty</div>
+  </div><div style="text-align:center;padding:0 20px 16px;"><button class="btn btn-outline" onclick="document.getElementById('driftModal').remove()">ปิด</button></div></div>`;
+  document.body.appendChild(modal);
 }
 
 // ════════════════════════════════════════════════════════════

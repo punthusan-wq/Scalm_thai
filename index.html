@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LA-B Calibration Management System</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#613177">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SCALM">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <script>try{const t=localStorage.getItem('scalmTheme');if(t==='thai-airways')document.documentElement.setAttribute('data-theme','thai-airways');}catch(e){}</script>
 <style>
   /* ══ AUTH / LOGIN ══════════════════════════════════════ */
@@ -2124,6 +2130,7 @@
           <button class="btn btn-outline" onclick="exportData('csv')">📋 Export CSV</button>
           <button class="btn btn-outline" onclick="exportData('json')">🔷 Export JSON</button>
           <button class="btn btn-primary" onclick="fullSystemBackup()">💾 สำรองทั้งระบบ</button>
+          <button class="btn btn-outline" onclick="archiveOldData()">📦 Archive ข้อมูลเก่า</button>
           <button class="btn btn-outline" onclick="triggerRestoreBackup()">♻️ กู้คืนจากไฟล์สำรอง</button>
           <button class="btn btn-danger" onclick="clearDatabase()">🗑 ล้างฐานข้อมูล</button>
         </div>
@@ -2391,7 +2398,7 @@
     <div class="panel-header"><div class="panel-title">✅ บันทึกผลการสอบเทียบ/Record Calibration Result</div></div>
     <div class="panel-body" style="padding:0;">
       <table class="cal-table">
-        <thead><tr><th>EQ No.</th><th>ชื่อเครื่องมือ</th><th>AWM ผู้สอบเทียบ</th><th>วันที่ Cal.</th><th>Reference Standard ที่ใช้</th><th>ค่าที่วัดได้</th><th>U (±)</th><th>k</th><th>สภาวะแวดล้อม</th><th>ผลการสอบเทียบ</th><th></th></tr></thead>
+        <thead><tr><th>EQ No.</th><th>ชื่อเครื่องมือ</th><th>AWM ผู้สอบเทียบ</th><th>วันที่ Cal.</th><th>Reference Standard ที่ใช้</th><th>ค่าที่วัดได้</th><th>U (±)</th><th>k</th><th>สภาวะแวดล้อม</th><th>ผลการสอบเทียบ</th><th>แนบเอกสาร</th><th></th></tr></thead>
         <tbody id="completeEligibleTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:16px;">ไม่มีรายการรอบันทึกผล</td></tr></tbody>
       </table>
       <datalist id="refStandardOptions"></datalist>
@@ -2634,6 +2641,9 @@
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.10 แก้ไขข้อมูลเครื่องมือ (✏️ แก้ไข)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.11 เปลี่ยนสถานะวงจรชีวิตเครื่องมือ (🔄)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.12 กำหนดคุณวุฒิ AWM (🎓 Competency)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.13 Archive ข้อมูลเก่า (📦)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.14 แนบลิงก์เอกสาร/ใบรับรอง (📎)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.15 ติดตั้ง SCALM เป็น App (PWA)</a>
       <a href="#ug-owner" style="color:var(--accent-cyan);">4. สำหรับ Owner</a>
       <a href="#ug-awm" style="color:var(--accent-cyan);">5. สำหรับ AWM (Aircraft Workshop Mechanic)</a>
       <a href="#ug-manager" style="color:var(--accent-cyan);">6. สำหรับ LA-B Manager</a>
@@ -2720,6 +2730,27 @@
         <li>🚫 ถ้าใบอนุญาตหมดอายุ → เตือนให้ต่ออายุก่อนมอบหมาย</li>
         <li>🔓 ถ้ายังไม่ได้ตั้งค่าคุณวุฒิให้ AWM คนใด → ระบบข้ามการตรวจสอบ (ไม่บล็อกการทำงาน)</li>
       </ul>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-header"><div class="panel-title">3.13–3.15 ฟีเจอร์เพิ่มเติม</div></div>
+    <div class="panel-body" style="font-size:13px;line-height:1.8;">
+      <div class="section-div">3.13 Archive ข้อมูลเก่า (📦)</div>
+      <p>ไปที่ <strong>"ตั้งค่า" → "จัดการฐานข้อมูล"</strong> → กดปุ่ม <strong>"📦 Archive ข้อมูลเก่า"</strong> → ระบบจะถามว่าต้องการ archive ข้อมูลที่เก่ากว่ากี่เดือน (แนะนำ 12 เดือน) → ระบบจะ export CalRequest + Audit Log เก่าเป็นไฟล์ JSON แล้วลบออกจาก localStorage เพื่อคืนพื้นที่ ไฟล์ archive เก็บไว้เป็นหลักฐานใน Share Drive ของแผนก ข้อมูลไม่สูญหาย แค่ย้ายไปเก็บในไฟล์</p>
+      <p style="margin-top:6px;color:var(--text-warning);">⚠ ควร archive ทุก 12 เดือน เพื่อป้องกัน localStorage เต็ม (จำกัด 5 MB)</p>
+
+      <div class="section-div">3.14 แนบลิงก์เอกสาร/ใบรับรอง (📎)</div>
+      <p>ตอนบันทึกผลสอบเทียบ มีช่อง <strong>"แนบเอกสาร"</strong> ให้วาง URL ของใบรับรอง (เช่น ลิงก์ Google Drive ของใบเซอร์จาก External Lab) → ลิงก์จะปรากฏในหน้า Timeline ของเครื่องมือเป็นปุ่ม <strong>"📎 เอกสารแนบ"</strong> กดแล้วเปิดไฟล์ในแท็บใหม่</p>
+      <p style="margin-top:6px;">เมื่อสแกน QR Code ที่ตัวเครื่องมือ → เปิดหน้าประวัติ → กดดูเอกสารแนบได้ทันที</p>
+
+      <div class="section-div">3.15 ติดตั้ง SCALM เป็น App บนมือถือ (PWA)</div>
+      <p>SCALM รองรับการติดตั้งเป็น App บนหน้าจอมือถือ (Progressive Web App) โดยไม่ต้องดาวน์โหลดจาก App Store:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li><strong>Android (Chrome):</strong> เปิด SCALM ใน Chrome → กดปุ่มจุด 3 จุด (⋮) มุมขวาบน → เลือก "Add to Home screen" → ตั้งชื่อ → กด Add</li>
+        <li><strong>iPhone (Safari):</strong> เปิด SCALM ใน Safari → กดปุ่มแชร์ (📤) ด้านล่าง → เลือก "Add to Home Screen" → กด Add</li>
+      </ul>
+      <p style="margin-top:6px;">จากนั้นจะมี icon SCALM ที่หน้าจอมือถือ กดเปิดได้เลยเหมือน app ทั่วไป เปิดเต็มจอโดยไม่มี address bar</p>
     </div>
   </div>
 
@@ -4362,7 +4393,9 @@ function renderInstrumentTimelineCard(r, receivingDocs, returnDocs){
       extra+=`<div style="margin-top:4px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:4px;">✍️ ลงนามโดย: ${escHtml(sig.recordedBy)} (${escHtml(sig.recordedByRole||'')}) เมื่อ ${sig.recordedAt?new Date(sig.recordedAt).toLocaleString('th-TH'):'-'}</div>`;
     }
     // Certificate button
-    extra+=`<div style="margin-top:6px;"><button class="btn btn-outline btn-sm" onclick="generateCertificate('${escHtml(r.id)}')">📜 ออกใบรับรอง (Certificate)</button></div>`;
+    extra+=`<div style="margin-top:6px;">`;
+    if(r.documentLink) extra+=`<a href="${escHtml(r.documentLink)}" target="_blank" class="btn btn-outline btn-sm" style="margin-right:4px;">📎 เอกสารแนบ</a>`;
+    extra+=`<button class="btn btn-outline btn-sm" onclick="generateCertificate('${escHtml(r.id)}')">📜 ออกใบรับรอง</button></div>`;
     steps.push(ihStep(r.calResult==='Fail'?'🚨':'✅','บันทึกผลสอบเทียบ', r.calFinishDate, sig?sig.recordedBy:r.resultRecordedBy, extra));
   }
   if(r.nonConformanceResolvedBy){
@@ -5337,6 +5370,7 @@ function getEnvLevel(type){
             <input class="form-input" id="failReasonOther_${r.id}" placeholder="ระบุเหตุผล" style="display:none;margin-top:4px;">
           </div>
         </td>
+        <td><input class="form-input" id="docLink_${r.id}" placeholder="URL ใบเซอร์/เอกสาร" style="width:120px;font-size:10px;" type="url"></td>
         <td><button class="btn btn-primary btn-sm" onclick="recordCalResult('${r.id}')">✅ บันทึกผล</button></td>
       </tr>`;}).join('');
     }
@@ -5553,6 +5587,8 @@ function recordCalResult(id){
     recordedByRole: currentUser?currentUser.role:'',
     recordedAt: new Date().toISOString(),
   };
+  // ── Document/Certificate Attachment (URL) ──
+  list[idx].documentLink=(document.getElementById('docLink_'+id)?.value||'').trim();
   list[idx].failReason=failReason;
   list[idx].failReasonOtherText=failReason==='OT'?failReasonOtherText:'';
   list[idx].resultRecordedBy=currentUser?(currentUser.displayName||currentUser.username):'ไม่ทราบผู้ใช้';
@@ -8154,6 +8190,65 @@ function downloadTemplate(type){
 // เป็น JSON ไฟล์เดียว — ปุ่ม Export CSV/JSON เดิมส่งออกเฉพาะทะเบียนเครื่องมือเท่านั้น
 // ════════════════════════════════════════════════════════════
 const BACKUP_EXCLUDE_KEYS=['scalmSession','scalmLoginAttempts']; // ข้อมูลเฉพาะเครื่อง ไม่ควรย้ายข้ามเครื่อง
+// ════════════════════════════════════════════════════════════
+// ARCHIVE OLD DATA — Archive ข้อมูลเก่าเพื่อคืนพื้นที่ localStorage
+// ════════════════════════════════════════════════════════════
+function archiveOldData(){
+  if(!isAdmin()){ showToast('critical','เฉพาะ LA-B Planner เท่านั้น'); return; }
+  const months=parseInt(prompt('Archive ข้อมูล CalRequest + Audit Log ที่เก่ากว่ากี่เดือน?\n(แนะนำ 12 เดือน — ข้อมูลจะถูก export เป็นไฟล์ JSON แล้วลบออกจากระบบ)\n\nพิมพ์จำนวนเดือน:','12'));
+  if(!months||isNaN(months)||months<1) return;
+  const cutoff=new Date(); cutoff.setMonth(cutoff.getMonth()-months); cutoff.setHours(0,0,0,0);
+
+  // Archive CalRequests
+  const allReqs=getCalRequests();
+  const oldReqs=allReqs.filter(r=>{
+    if(!r.calFinishDate) return false;
+    const d=parseThaiDate(r.calFinishDate);
+    return d && d<cutoff;
+  });
+  const keepReqs=allReqs.filter(r=>!oldReqs.includes(r));
+
+  // Archive Audit Logs
+  const auditKey='scalmAuditLog';
+  let allAudits=[]; try{allAudits=JSON.parse(localStorage.getItem(auditKey)||'[]');}catch{}
+  const oldAudits=allAudits.filter(a=>{
+    if(!a.timestamp) return false;
+    return new Date(a.timestamp)<cutoff;
+  });
+  const keepAudits=allAudits.filter(a=>!oldAudits.includes(a));
+
+  if(oldReqs.length===0&&oldAudits.length===0){
+    showToast('save',`ไม่มีข้อมูลที่เก่ากว่า ${months} เดือน — ไม่ต้อง archive`);
+    return;
+  }
+
+  // Size calculation
+  const archiveSize=JSON.stringify(oldReqs).length+JSON.stringify(oldAudits).length;
+  const msg=`📦 Archive ข้อมูลเก่ากว่า ${months} เดือน:\n\n• CalRequests: ${oldReqs.length} รายการ (จากทั้งหมด ${allReqs.length})\n• Audit Logs: ${oldAudits.length} รายการ (จากทั้งหมด ${allAudits.length})\n• พื้นที่ที่จะได้คืน: ~${(archiveSize/1024).toFixed(0)} KB\n\nระบบจะ:\n1. Export ข้อมูลเก่าเป็นไฟล์ JSON (เก็บไว้เป็นหลักฐาน)\n2. ลบออกจาก localStorage\n\nกด OK เพื่อดำเนินการ`;
+  if(!confirm(msg)) return;
+
+  // Export archive file
+  const now=new Date();
+  const archivePayload={
+    app:'SCALM-ARCHIVE', archiveVersion:1,
+    archivedAt:`${localIsoDate(now)} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
+    archivedBy:currentUser?(currentUser.displayName||currentUser.username):'-',
+    cutoffMonths:months, cutoffDate:cutoff.toISOString(),
+    calRequests:oldReqs, auditLogs:oldAudits,
+    stats:{calReqs:oldReqs.length, audits:oldAudits.length, freedBytes:archiveSize},
+  };
+  const fname=`SCALM_Archive_${months}mo_${localIsoDate(now)}.json`;
+  downloadBlob(JSON.stringify(archivePayload,null,2), fname, 'application/json');
+
+  // Remove from localStorage
+  saveCalRequests(keepReqs);
+  safeSetItem(auditKey, JSON.stringify(keepAudits));
+
+  logAudit('SYSTEM', `Archive ข้อมูลเก่า ${months} เดือน — CalReq ${oldReqs.length} รายการ + Audit ${oldAudits.length} รายการ — คืนพื้นที่ ~${(archiveSize/1024).toFixed(0)} KB → ไฟล์ ${fname}`);
+  refreshSettingsDbInfo();
+  showToast('save',`Archive สำเร็จ — ลบ ${oldReqs.length} CalReq + ${oldAudits.length} Audit — คืนพื้นที่ ~${(archiveSize/1024).toFixed(0)} KB\nไฟล์ archive: ${fname}`);
+}
+
 function fullSystemBackup(){
   if(!isAdmin()){ showToast('critical','เฉพาะ LA-B Planner เท่านั้นที่สำรองทั้งระบบได้ (ไฟล์สำรองมีข้อมูลผู้ใช้)'); return; }
   const data={};
@@ -8305,6 +8400,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('authOverlay').classList.remove('hidden');
   setTimeout(()=>document.getElementById('loginUser').focus(),300);
 });
+</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(r=>{console.log('SCALM PWA: Service Worker registered');}).catch(e=>{console.log('SW registration failed:',e);});
+}
 </script>
 </body>
 </html>

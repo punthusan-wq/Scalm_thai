@@ -589,7 +589,7 @@
   .status-dot { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  .nav-tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 0 24px; gap: 4px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+  .nav-tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 0 24px; gap: 4px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: thin; position: sticky; top: 0; z-index: 100; }
   .nav-tabs::-webkit-scrollbar { height: 4px; } .nav-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
   .nav-tab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
   .nav-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }

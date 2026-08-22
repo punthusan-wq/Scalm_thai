@@ -626,6 +626,8 @@
   .badge-red { background: rgba(229,57,53,0.15); color: var(--accent-red); border: 1px solid rgba(229,57,53,0.3); }
   .badge-blue { background: rgba(30,111,207,0.15); color: #5b9ef7; border: 1px solid rgba(30,111,207,0.3); }
   .badge-orange { background: rgba(255,109,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,109,0,0.3); }
+  .badge-gray { background: rgba(150,150,150,0.15); color: #999; border: 1px solid rgba(150,150,150,0.3); }
+  .badge-purple { background: rgba(130,80,200,0.15); color: #b580e0; border: 1px solid rgba(130,80,200,0.3); }
   .badge-grey { background: rgba(74,96,128,0.3); color: var(--text-secondary); border: 1px solid var(--border); }
 
   .timeline { position: relative; padding-left: 28px; }
@@ -1478,6 +1480,12 @@
     <button class="btn btn-outline" onclick="openScanModal()">📷 สแกน QR</button>
     <button class="btn btn-outline" onclick="printAllQR()">🖨️ พิมพ์ป้าย QR ทั้งหมด</button>
     <button class="btn btn-primary" onclick="openModal()">＋ เพิ่มเครื่องมือ</button>
+  </div>
+
+  <!-- ACTIVE / INACTIVE SUB-TABS -->
+  <div class="subtab-bar" style="margin-bottom:12px;">
+    <div class="subtab-item active" id="instSubtab-active" onclick="switchInstSubtab('active')">✅ ใช้งานอยู่ <span class="badge badge-green" id="instActiveCount" style="margin-left:4px;">0</span></div>
+    <div class="subtab-item" id="instSubtab-inactive" onclick="switchInstSubtab('inactive')">🚫 ยกเลิก/ไม่ใช้งาน <span class="badge badge-gray" id="instInactiveCount" style="margin-left:4px;">0</span></div>
   </div>
 
   <!-- TYPE TABS -->
@@ -2610,6 +2618,8 @@
       <a href="#ug-intro" style="color:var(--accent-cyan);">1. ที่มาและวัตถุประสงค์ของการพัฒนาโปรแกรม</a>
       <a href="#ug-overview" style="color:var(--accent-cyan);">2. ภาพรวมระบบ — เข้าสู่ระบบและเมนูหลัก</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);">3. สำหรับ LA-B Planner</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.10 แก้ไขข้อมูลเครื่องมือ (✏️ แก้ไข)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.11 เปลี่ยนสถานะวงจรชีวิตเครื่องมือ (🔄)</a>
       <a href="#ug-owner" style="color:var(--accent-cyan);">4. สำหรับ Owner</a>
       <a href="#ug-awm" style="color:var(--accent-cyan);">5. สำหรับ AWM (Aircraft Workshop Mechanic)</a>
       <a href="#ug-manager" style="color:var(--accent-cyan);">6. สำหรับ LA-B Manager</a>
@@ -2672,6 +2682,21 @@
       <p>ที่เมนู "ประวัติเครื่องมือ" มีปุ่ม <strong>"➕ เพิ่มประวัติย้อนหลัง"</strong> ใช้เมื่อเครื่องมือมีประวัติสอบเทียบมาก่อนแล้วแต่ไม่เคยผ่าน Workflow ของระบบนี้ (ซื้อมือสองมาพร้อมใบรับรองเดิม หรือย้ายมาจากสาขาอื่น) — กรอกวันที่สอบเทียบ ผล และเลือกแหล่งที่มา บันทึกเป็นรายการ "ปิดจบแล้ว" ทันที ไม่ต้องไล่ผ่านทุกขั้นตอนจริง จะขึ้นป้าย "📋 ประวัติที่นำเข้าย้อนหลัง" แยกให้เห็นชัดจากรายการปกติ</p>
       <div class="section-div">3.9 คลังเครื่องมือสำรอง (Loaner/Spare Pool)</div>
       <p>ที่หน้า Dashboard มี panel "🔄 คลังเครื่องมือสำรอง" — เพิ่มเครื่องมือเข้าคลัง แล้วกด "จ่ายให้ยืม" เมื่อมีเครื่องมือหลักไปสอบเทียบ (โดยเฉพาะที่ส่ง External Lab ซึ่งใช้เวลานาน) ระบุหน่วยงานที่ยืมและวันที่คาดว่าจะคืน — ถ้าเลยกำหนดคืนแล้วยังไม่คืน แถวจะขึ้นเตือนสีแดงทันที</p>
+      <div class="section-div">3.10 แก้ไขข้อมูลเครื่องมือ (✏️ แก้ไข)</div>
+      <p>ที่หน้า "เครื่องมือวัด" กดปุ่ม <strong>"✏️ แก้ไข"</strong> ที่แถวเครื่องมือที่ต้องการ → Modal จะเปิดขึ้นพร้อมข้อมูลเดิมทุกช่อง (EQ No. ถูกล็อคไม่ให้แก้เพราะเป็น primary key) → แก้ไขแล้วกด "บันทึก" → ระบบบันทึก Audit Log แสดงรายละเอียดว่าเปลี่ยนแปลงอะไรบ้าง (ชื่อเดิม → ชื่อใหม่)</p>
+      <div class="section-div">3.11 เปลี่ยนสถานะวงจรชีวิตเครื่องมือ (🔄)</div>
+      <p>กดปุ่ม <strong>"🔄"</strong> ข้างสถานะเครื่องมือ → เลือกสถานะใหม่จาก 6 ตัวเลือก:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li><strong>🔧 ชำรุด</strong> — เครื่องมือเสียหาย ต้องซ่อมก่อนใช้งาน</li>
+        <li><strong>🛠️ ส่งซ่อม</strong> — อยู่ระหว่างการซ่อมแซม</li>
+        <li><strong>🚫 ปลดระวาง</strong> — ยกเลิกใช้งานถาวร (อายุครบ, ล้าสมัย)</li>
+        <li><strong>❓ สูญหาย</strong> — หาเครื่องมือไม่พบ</li>
+        <li><strong>📤 ยืม/โอนย้าย</strong> — ให้หน่วยงานอื่นยืม หรือโอนย้ายชั่วคราว</li>
+        <li><strong>📦 ขายทอดตลาด</strong> — จำหน่ายออกจากทะเบียนแล้ว</li>
+      </ul>
+      <p style="margin-top:6px;">ทุกครั้งที่เปลี่ยนสถานะ <strong>ต้องระบุเหตุผล</strong> (บังคับกรอก) — ระบบบันทึก Audit Log ทุกรายการ สืบค้นย้อนหลังได้ว่าใครเปลี่ยน เมื่อไหร่ จากอะไรเป็นอะไร เพราะอะไร</p>
+      <p style="margin-top:6px;">เครื่องมือที่เปลี่ยนสถานะแล้วจะ <strong>ย้ายไปอยู่ในแท็บ "🚫 ยกเลิก/ไม่ใช้งาน"</strong> แยกจากเครื่องมือที่ใช้งานอยู่ และ <strong>ไม่นับรวม</strong> ในจำนวนเกินกำหนด/ใกล้ครบบน Dashboard</p>
+      <p style="margin-top:6px;">สามารถ <strong>คืนสถานะกลับเป็นปกติ</strong> ได้ (เลือก "✅ ใช้งานปกติ") เครื่องมือจะย้ายกลับไปแท็บ "ใช้งานอยู่" อัตโนมัติ</p>
     </div>
   </div>
 
@@ -3387,9 +3412,8 @@ function closeWorkSourceSubDashboard(){
   if(panel) panel.style.display='none';
 }
 function computeStatus(row){
-  // [FIX 2569-07] เคารพ row.status เฉพาะสถานะ "วงจรอายุ" (เช่น ระงับใช้งาน) เท่านั้น
+  // [FIX 2569-07] เคารพ row.status เฉพาะสถานะ "วงจรอายุ" (เช่น ระงับใช้งาน, ชำรุด, ปลดระวาง) เท่านั้น
   // ค่า ปกติ/เกินกำหนด/ใกล้ครบ ที่ติดมากับไฟล์ import ต้องคำนวณใหม่จากวันครบกำหนดเสมอ
-  // ไม่งั้นสถานะจะแช่แข็ง ณ วันที่ import และเครื่องมือไม่มีวันเด้งเป็น "เกินกำหนด"
   if(row.status && !['ปกติ','เกินกำหนด','ใกล้ครบ'].includes(String(row.status).trim())) return row.status;
   if(!row.nextCal) return 'ปกติ';
   const next=parseThaiDate(row.nextCal);
@@ -3555,21 +3579,23 @@ function refreshReportKpis(){
 }
 function refreshDashboard(){
   const db=getDB();
-  let done=0,overdue=0,due7=0;
+  let done=0,overdue=0,due7=0,inactive=0;
   const today=new Date(); today.setHours(0,0,0,0);
   db.forEach(row=>{
     const st=computeStatus(row);
+    if(isInactiveStatus(st)){ inactive++; return; }
     if(st==='เกินกำหนด') overdue++;
     else if(st==='ใกล้ครบ') due7++;
     const lc=parseThaiDate(row.lastCal);
     if(lc&&lc.getMonth()===today.getMonth()&&lc.getFullYear()===today.getFullYear()) done++;
   });
   const total=db.length;
+  const active=total-inactive;
   const pf=computePassFailStats(db);
-  setKPI('kpiDone',done,`เครื่องมือ / เป้า ${total} ชิ้น`);
+  setKPI('kpiDone',done,`เครื่องมือ / เป้า ${active} ชิ้น (active)`);
   setKPI('kpiDue7',due7,'ต้องดำเนินการเร่งด่วน');
   setKPI('kpiOver',overdue,'ต้องระงับการใช้งาน');
-  setKPI('kpiTotal',total,'ทะเบียน LA-B ทั้งหมด');
+  setKPI('kpiTotal',total,inactive>0?`ทะเบียนทั้งหมด (${inactive} inactive)`:'ทะเบียน LA-B ทั้งหมด');
   setKPI('kpiPass', pf.pct!==null?pf.pct.toFixed(1)+'%':'N/A', pf.known>0?`จาก ${pf.known} รายการที่มีผลตรวจ`:'ยังไม่มีข้อมูลผลตรวจ');
   const badge=document.getElementById('alertBadgeCount');
   if(badge) badge.textContent=overdue+due7;
@@ -3645,6 +3671,15 @@ document.addEventListener('click', ()=>closeAllColFilterDropdowns());
 let instCurrentType = 'ทั้งหมด';
 let instCurrentPage = 1;
 let instPageSize = 50;
+let instSubtabMode = 'active'; // 'active' or 'inactive'
+
+function switchInstSubtab(mode){
+  instSubtabMode = mode;
+  instCurrentPage = 1;
+  document.getElementById('instSubtab-active').classList.toggle('active', mode==='active');
+  document.getElementById('instSubtab-inactive').classList.toggle('active', mode==='inactive');
+  renderInstrumentTable();
+}
 let instFilteredData = []; // holds filtered rows for pagination
 
 const TYPE_ICONS = {Torque:'🔧',Electrical:'⚡',Dimension:'📏',Force:'💪',Pressure:'🌡️',Weight:'⚖️',Mass:'🧱',Temperature:'🌡️',Airspeed:'✈️',Rotation:'🔄',Voltage:'⚡',Flow:'💧',Humidity:'💦',Vibration:'📳',Frequency:'〰️'};
@@ -3712,6 +3747,11 @@ function renderInstrumentTable(filter){
   buildTypeTabs();
   refreshInstChipCounts(db);
   refreshInstColFilterSummary();
+  // อัพเดท sub-tab count (Active / Inactive)
+  const allActive=db.filter(r=>!isInactiveStatus(computeStatus(r)));
+  const allInactive=db.filter(r=>isInactiveStatus(computeStatus(r)));
+  const acEl=document.getElementById('instActiveCount'); if(acEl) acEl.textContent=allActive.length;
+  const icEl=document.getElementById('instInactiveCount'); if(icEl) icEl.textContent=allInactive.length;
   if(db.length===0) return;
   const tbody=document.querySelector('#instTable tbody'); if(!tbody) return;
 
@@ -3722,8 +3762,14 @@ function renderInstrumentTable(filter){
   }
   const searchQ = (document.getElementById('instSearch').value||'').toLowerCase();
 
+  // 1.5) Filter by Active/Inactive sub-tab
+  const showInactive = instSubtabMode === 'inactive';
+  let rows = db.filter(r => {
+    const st = computeStatus(r);
+    return showInactive ? isInactiveStatus(st) : !isInactiveStatus(st);
+  });
+
   // 2) Filter by type tab
-  let rows = db;
   if(instCurrentType !== 'ทั้งหมด'){
     rows = rows.filter(r => r.type === instCurrentType);
   }
@@ -3767,15 +3813,18 @@ function renderInstrumentTable(filter){
   const canEdit=can('editInst');
   pageRows.forEach(row=>{
     const st=computeStatus(row);
-    const statusBadge=st==='เกินกำหนด'?`<span class="badge badge-red">🚨 เกินกำหนด</span>`:st==='ใกล้ครบ'?`<span class="badge badge-yellow">⏰ ใกล้ครบ</span>`:`<span class="badge badge-green">✓ ใช้งานได้</span>`;
-    const nextCalDisplay=row.nextCal?(st==='เกินกำหนด'?`<strong style="color:var(--accent-red);">${row.nextCal} 🚨</strong>`:st==='ใกล้ครบ'?`<strong style="color:var(--accent-yellow);">${row.nextCal} ⚠</strong>`:row.nextCal):'–';
+    const lcBadge=getLifecycleBadge(st);
+    const statusBadge=lcBadge ? lcBadge : st==='เกินกำหนด'?`<span class="badge badge-red">🚨 เกินกำหนด</span>`:st==='ใกล้ครบ'?`<span class="badge badge-yellow">⏰ ใกล้ครบ</span>`:`<span class="badge badge-green">✓ ใช้งานได้</span>`;
+    const isInactive=isInactiveStatus(st);
+    const nextCalDisplay=isInactive?'<span style="color:var(--text-muted);">—</span>':row.nextCal?(st==='เกินกำหนด'?`<strong style="color:var(--accent-red);">${row.nextCal} 🚨</strong>`:st==='ใกล้ครบ'?`<strong style="color:var(--accent-yellow);">${row.nextCal} ⚠</strong>`:row.nextCal):'–';
     const isExt=(row.lab||'').toLowerCase().match(/external|nimt|ext/);
     const labBadge=isExt?`<span class="badge badge-orange">External</span>`:`<span class="badge badge-green">Internal</span>`;
     const actionBtn=st==='เกินกำหนด'?`<button class="btn btn-danger btn-sm" onclick="sendAlert()">แจ้งเตือน</button> ${canEdit?`<button class="btn btn-outline btn-sm" onclick="editInstrument('${escHtml(row.id||'')}')">✏️ แก้ไข</button>`:''}`
       :canEdit?`<button class="btn btn-outline btn-sm" onclick="editInstrument('${escHtml(row.id||'')}')">✏️ แก้ไข</button>`:`<button class="btn btn-outline btn-sm locked-btn" title="ไม่มีสิทธิ์แก้ไข">🔒 ดูเท่านั้น</button>`;
+    const statusBtn=canEdit?`<button class="btn btn-outline btn-sm" onclick="openStatusChangeModal('${escHtml(row.id||'')}')">🔄</button>`:'';
     const qrBtn=`<button class="btn btn-outline btn-sm" onclick="showQR('${escHtml(row.id||'')}')">📱 QR</button>`;
     const wfCell=workflowCellHtml(row);
-    tbody.insertAdjacentHTML('beforeend',`<tr><td><span class="inst-id">${escHtml(row.id||'–')}</span></td><td>${escHtml(row.name||'–')}</td><td>${escHtml(row.brand||'')} ${escHtml(row.model||'')}</td><td><span class="badge badge-blue">${escHtml(row.type||'–')}</span></td><td>${escHtml(row.lastCal||'–')}</td><td>${nextCalDisplay}</td><td>${escHtml(row.interval?row.interval+' เดือน':'–')}</td><td>${labBadge}</td><td>${statusBadge}</td><td>${qrBtn}</td><td>${wfCell}</td><td>${actionBtn}</td></tr>`);
+    tbody.insertAdjacentHTML('beforeend',`<tr><td><span class="inst-id">${escHtml(row.id||'–')}</span></td><td>${escHtml(row.name||'–')}</td><td>${escHtml(row.brand||'')} ${escHtml(row.model||'')}</td><td><span class="badge badge-blue">${escHtml(row.type||'–')}</span></td><td>${escHtml(row.lastCal||'–')}</td><td>${nextCalDisplay}</td><td>${escHtml(row.interval?row.interval+' เดือน':'–')}</td><td>${labBadge}</td><td>${statusBadge} ${statusBtn}</td><td>${qrBtn}</td><td>${wfCell}</td><td>${actionBtn}</td></tr>`);
   });
 
   // 7) Render pagination
@@ -3786,6 +3835,25 @@ function renderInstrumentTable(filter){
 // PRIORITY SCORING ENGINE — จัดลำดับการสอบเทียบประจำวัน
 // ════════════════════════════════════════════════════════════
 // น้ำหนักความสำคัญตามผลกระทบต่อความปลอดภัยการบิน (ปรับได้ตามนโยบาย QA)
+// ════════════════════════════════════════════════════════════
+// INSTRUMENT LIFECYCLE STATUS — สถานะวงจรชีวิตเครื่องมือวัด
+// ════════════════════════════════════════════════════════════
+const LIFECYCLE_STATUSES={
+  'ชำรุด':               {label:'🔧 ชำรุด (Damaged)',         badge:'badge-red',    icon:'🔧', inactive:true},
+  'ส่งซ่อม':             {label:'🛠️ ส่งซ่อม (Under Repair)',   badge:'badge-orange', icon:'🛠️', inactive:true},
+  'ปลดระวาง':           {label:'🚫 ปลดระวาง (Decommissioned)',badge:'badge-gray',   icon:'🚫', inactive:true},
+  'สูญหาย':             {label:'❓ สูญหาย (Lost/Missing)',     badge:'badge-red',    icon:'❓', inactive:true},
+  'ยืม/โอนย้าย':         {label:'📤 ยืม/โอนย้าย (On Loan)',     badge:'badge-purple', icon:'📤', inactive:true},
+  'ขายทอดตลาด':         {label:'📦 ขายทอดตลาด (Disposed)',    badge:'badge-gray',   icon:'📦', inactive:true},
+  'ระงับใช้งาน (Non-conformance)': {label:'⛔ ระงับใช้งาน (NC)', badge:'badge-red', icon:'⛔', inactive:true},
+};
+function isInactiveStatus(st){ return LIFECYCLE_STATUSES[st] && LIFECYCLE_STATUSES[st].inactive; }
+function getLifecycleBadge(st){
+  const ls=LIFECYCLE_STATUSES[st];
+  if(!ls) return null;
+  return `<span class="badge ${ls.badge}">${ls.label}</span>`;
+}
+
 const TYPE_CRITICALITY={ 'airspeed':25,'altitude':25,'pressure':18,'torque':20,'temperature':15,'rotation':10,'electrical':10,'vibration':12 };
 const TYPE_DURATION_MIN={ 'torque':90,'airspeed':90,'altitude':90,'temperature':75,'pressure':60,'electrical':45,'rotation':60,'vibration':60 };
 function getCriticality(type){
@@ -6980,6 +7048,82 @@ function resolveSelectValue(selectId){
   return sel.value;
 }
 function closeModal(){ document.getElementById('addModal').classList.remove('show'); editingEqId=null; }
+
+// ════════════════════════════════════════════════════════════
+// STATUS CHANGE MODAL — เปลี่ยนสถานะวงจรชีวิตเครื่องมือ
+// ════════════════════════════════════════════════════════════
+function openStatusChangeModal(eqId){
+  if(!can('editInst')){ showToast('critical','คุณไม่มีสิทธิ์เปลี่ยนสถานะ'); return; }
+  const db=getDB();
+  const row=db.find(r=>String(r.id).trim().toUpperCase()===String(eqId).trim().toUpperCase());
+  if(!row){ showToast('critical',`ไม่พบเครื่องมือ "${eqId}"`); return; }
+  const currentSt=computeStatus(row);
+  const statusOptions=[
+    {value:'',label:'✅ ใช้งานปกติ (คืนสถานะ)'},
+    {value:'ชำรุด',label:'🔧 ชำรุด (Damaged)'},
+    {value:'ส่งซ่อม',label:'🛠️ ส่งซ่อม (Under Repair)'},
+    {value:'ปลดระวาง',label:'🚫 ปลดระวาง (Decommissioned)'},
+    {value:'สูญหาย',label:'❓ สูญหาย (Lost/Missing)'},
+    {value:'ยืม/โอนย้าย',label:'📤 ยืม/โอนย้าย (On Loan/Transfer)'},
+    {value:'ขายทอดตลาด',label:'📦 ขายทอดตลาด (Disposed/Auction)'},
+  ];
+  const opts=statusOptions.map(o=>`<option value="${escHtml(o.value)}" ${(row.status||'')===o.value?'selected':''}>${o.label}</option>`).join('');
+  const modal=document.createElement('div');
+  modal.className='modal-overlay show';
+  modal.id='statusChangeModal';
+  modal.innerHTML=`<div class="modal-card" style="max-width:440px;">
+    <div class="modal-title" style="margin-bottom:12px;">🔄 เปลี่ยนสถานะเครื่องมือ<span class="modal-close" onclick="closeStatusModal()">✕</span></div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">เครื่องมือ</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${escHtml(row.id)} — ${escHtml(row.name||'')}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">สถานะปัจจุบัน: ${currentSt}</div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">สถานะใหม่ *</label>
+      <select id="scm_newStatus" class="auth-input" style="width:100%;">${opts}</select>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">เหตุผล / หมายเหตุ *</label>
+      <textarea id="scm_reason" class="auth-input" rows="3" style="width:100%;resize:vertical;" placeholder="ระบุเหตุผลการเปลี่ยนสถานะ เช่น ชำรุดจากการใช้งาน, ปลดระวางตามอายุการใช้งาน"></textarea>
+    </div>
+    <div id="scm_error" class="auth-error" style="margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="confirmStatusChange('${escHtml(row.id)}')">บันทึก</button>
+      <button class="btn btn-outline" onclick="closeStatusModal()">ยกเลิก</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+function closeStatusModal(){
+  const m=document.getElementById('statusChangeModal');
+  if(m) m.remove();
+}
+function confirmStatusChange(eqId){
+  const newStatus=document.getElementById('scm_newStatus').value;
+  const reason=document.getElementById('scm_reason').value.trim();
+  const errEl=document.getElementById('scm_error');
+  if(!reason){ errEl.textContent='กรุณาระบุเหตุผล'; errEl.classList.add('show'); return; }
+  const db=getDB();
+  const idx=db.findIndex(r=>String(r.id).trim().toUpperCase()===eqId.toUpperCase());
+  if(idx<0){ errEl.textContent='ไม่พบเครื่องมือ'; errEl.classList.add('show'); return; }
+  const oldStatus=db[idx].status||'ปกติ (คำนวณจากวันครบกำหนด)';
+  const newLabel=newStatus||'ใช้งานปกติ (คืนสถานะ)';
+  db[idx].status=newStatus;
+  // บันทึกประวัติการเปลี่ยนสถานะ
+  if(!db[idx].statusHistory) db[idx].statusHistory=[];
+  db[idx].statusHistory.push({
+    from:oldStatus,
+    to:newLabel,
+    reason:reason,
+    by:currentUser?currentUser.displayName||currentUser.username:'ระบบ',
+    date:new Date().toISOString()
+  });
+  saveDB(db);
+  logAudit(eqId, `เปลี่ยนสถานะ: "${oldStatus}" → "${newLabel}" เหตุผล: ${reason}`);
+  closeStatusModal();
+  refreshDashboard(); renderInstrumentTable();
+  showToast('save',`เปลี่ยนสถานะ ${eqId} เป็น "${newLabel}" เรียบร้อย`);
+}
 function resetAddModalForm(){
   ['am_id','am_name','am_brand','am_model','am_lastCal'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   const errEl=document.getElementById('addModalError'); if(errEl){ errEl.classList.remove('show'); errEl.textContent=''; }

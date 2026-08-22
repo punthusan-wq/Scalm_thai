@@ -2378,7 +2378,7 @@
     <div class="panel-header"><div class="panel-title">✅ บันทึกผลการสอบเทียบ/Record Calibration Result</div></div>
     <div class="panel-body" style="padding:0;">
       <table class="cal-table">
-        <thead><tr><th>EQ No.</th><th>ชื่อเครื่องมือ</th><th>AWM ผู้สอบเทียบ</th><th>วันที่ Cal.</th><th>Reference Standard ที่ใช้</th><th>ค่าที่วัดได้ ± Uncertainty</th><th>ผลการสอบเทียบ</th><th></th></tr></thead>
+        <thead><tr><th>EQ No.</th><th>ชื่อเครื่องมือ</th><th>AWM ผู้สอบเทียบ</th><th>วันที่ Cal.</th><th>Reference Standard ที่ใช้</th><th>ค่าที่วัดได้</th><th>U (±)</th><th>k</th><th>สภาวะแวดล้อม</th><th>ผลการสอบเทียบ</th><th></th></tr></thead>
         <tbody id="completeEligibleTbody"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:16px;">ไม่มีรายการรอบันทึกผล</td></tr></tbody>
       </table>
       <datalist id="refStandardOptions"></datalist>
@@ -3990,6 +3990,134 @@ function renderUserGuidePage(){
   window.scrollTo(0,0);
 }
 // ── ประวัติเครื่องมือ (Instrument History) — timeline ครบทุกครั้งที่เคยสอบเทียบ สำหรับตรวจสอบย้อนหลัง ──
+// ════════════════════════════════════════════════════════════
+// TRACEABILITY CHAIN — แผนผังสืบสายการสอบเทียบ (ISO 17025 §6.5)
+// ════════════════════════════════════════════════════════════
+function showTraceabilityChain(eqId){
+  const db=getDB();
+  const reqs=getCalRequests();
+  const row=db.find(r=>String(r.id).toUpperCase()===String(eqId).toUpperCase());
+  if(!row){ showToast('critical',`ไม่พบเครื่องมือ "${eqId}"`); return; }
+  // หา Reference Standard ล่าสุดที่ใช้สอบเทียบเครื่องมือนี้
+  const calHistory=reqs.filter(r=>String(r.instrumentId).toUpperCase()===String(eqId).toUpperCase()&&r.referenceStandardId).sort((a,b)=>(b.calFinishDate||'').localeCompare(a.calFinishDate||''));
+  const latestRef=calHistory.length>0?calHistory[0]:null;
+  const refId=latestRef?latestRef.referenceStandardId:'';
+  const refRow=refId?db.find(r=>String(r.id).toUpperCase()===refId.toUpperCase()):null;
+  // หา Reference ของ Reference (2nd level)
+  const refHistory=refId?reqs.filter(r=>String(r.instrumentId).toUpperCase()===refId.toUpperCase()&&r.referenceStandardId).sort((a,b)=>(b.calFinishDate||'').localeCompare(a.calFinishDate||'')):[];
+  const ref2Id=refHistory.length>0?refHistory[0].referenceStandardId:'';
+
+  let chainHtml=`<div style="padding:20px;font-size:13px;line-height:1.8;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;">🔗 Metrological Traceability Chain — ${escHtml(eqId)}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="background:var(--bg-accent);border:2px solid var(--border-accent);border-radius:10px;padding:12px 20px;text-align:center;min-width:280px;">
+        <div style="font-weight:700;color:var(--text-accent);">${escHtml(eqId)} — ${escHtml(row.name||'')}</div>
+        <div style="font-size:11px;color:var(--text-secondary);">Working Instrument · ${escHtml(row.type||'')} · ผล: ${escHtml(row.result||'ยังไม่มีข้อมูล')}</div>
+        ${latestRef?`<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">สอบเทียบล่าสุด: ${escHtml(latestRef.calFinishDate||'-')} · U: ${escHtml(latestRef.uncertaintyU||'-')} (k=${escHtml(latestRef.uncertaintyK||'2')})</div>`:''}
+      </div>
+      <div style="font-size:18px;color:var(--text-muted);">↑ สอบเทียบโดย</div>
+      ${refId?`<div style="background:var(--bg-warning);border:2px solid var(--border-warning);border-radius:10px;padding:12px 20px;text-align:center;min-width:280px;">
+        <div style="font-weight:700;color:var(--text-warning);">${escHtml(refId)} — ${escHtml(refRow?.name||'')}</div>
+        <div style="font-size:11px;color:var(--text-secondary);">Reference Standard · ${escHtml(refRow?.type||'')} · สถานะ: ${escHtml(refRow?computeStatus(refRow):'-')}</div>
+      </div>
+      <div style="font-size:18px;color:var(--text-muted);">↑ สอบเทียบโดย</div>`
+      :`<div style="background:var(--surface-1);border:2px dashed var(--border);border-radius:10px;padding:12px 20px;text-align:center;min-width:280px;color:var(--text-muted);">ยังไม่มีข้อมูล Reference Standard<br><span style="font-size:10px;">กรอก "Reference Standard ที่ใช้" ตอนบันทึกผลเพื่อสร้าง chain</span></div>
+      <div style="font-size:18px;color:var(--text-muted);">↑</div>`}
+      ${ref2Id?`<div style="background:var(--bg-success);border:2px solid var(--border-success);border-radius:10px;padding:12px 20px;text-align:center;min-width:280px;">
+        <div style="font-weight:700;color:var(--text-success);">${escHtml(ref2Id)}</div>
+        <div style="font-size:11px;color:var(--text-secondary);">Higher-level Reference</div>
+      </div>
+      <div style="font-size:18px;color:var(--text-muted);">↑</div>`:``}
+      <div style="background:rgba(130,80,200,0.1);border:2px solid rgba(130,80,200,0.3);border-radius:10px;padding:12px 20px;text-align:center;min-width:280px;">
+        <div style="font-weight:700;color:#b580e0;">NIMT / National Standard</div>
+        <div style="font-size:11px;color:var(--text-secondary);">สถาบันมาตรวิทยาแห่งชาติ</div>
+      </div>
+      <div style="font-size:18px;color:var(--text-muted);">↑</div>
+      <div style="background:var(--surface-1);border:2px solid var(--border);border-radius:10px;padding:12px 20px;text-align:center;min-width:280px;">
+        <div style="font-weight:700;color:var(--text-primary);">SI Unit</div>
+        <div style="font-size:11px;color:var(--text-secondary);">International System of Units</div>
+      </div>
+    </div>
+  </div>`;
+  const modal=document.createElement('div');
+  modal.className='modal-overlay show';
+  modal.id='traceabilityModal';
+  modal.innerHTML=`<div class="modal-card" style="max-width:500px;">${chainHtml}<div style="text-align:center;padding:0 20px 16px;"><button class="btn btn-outline" onclick="document.getElementById('traceabilityModal').remove()">ปิด</button></div></div>`;
+  document.body.appendChild(modal);
+}
+
+// ════════════════════════════════════════════════════════════
+// CALIBRATION CERTIFICATE GENERATOR — ออกใบรับรองผลการสอบเทียบ (ISO 17025 §7.8)
+// ════════════════════════════════════════════════════════════
+function generateCertificate(calReqId){
+  const list=getCalRequests();
+  const r=list.find(x=>x.id===calReqId);
+  if(!r){ showToast('critical','ไม่พบข้อมูลการสอบเทียบ'); return; }
+  if(!r.calFinishDate){ showToast('critical','ยังไม่ได้บันทึกผลการสอบเทียบ'); return; }
+  const db=getDB();
+  const inst=db.find(x=>String(x.id).toUpperCase()===String(r.instrumentId).toUpperCase());
+  const env=r.envConditions||{};
+  const sig=r.eSignature||{};
+  const certNo=`SCALM-${r.instrumentId}-${(r.calFinishDate||'').replace(/\s/g,'-')}-${calReqId.slice(-4)}`;
+  const certHtml=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Calibration Certificate — ${certNo}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#1a1a1a;font-size:13px;line-height:1.7}
+.header{text-align:center;border-bottom:3px solid #613177;padding-bottom:16px;margin-bottom:20px}
+.header h1{font-size:14px;color:#613177;letter-spacing:2px;margin-bottom:4px}
+.header h2{font-size:20px;color:#1a1a1a;margin-bottom:4px}
+.header p{font-size:11px;color:#666}
+.cert-no{font-size:13px;font-weight:700;color:#613177;margin:12px 0}
+table{width:100%;border-collapse:collapse;margin-bottom:16px}
+td{padding:6px 10px;border:1px solid #ddd;vertical-align:top}
+td:first-child{width:35%;background:#f8f6fa;font-weight:600;color:#444}
+.result-pass{color:#00C853;font-weight:700;font-size:16px}
+.result-fail{color:#E53935;font-weight:700;font-size:16px}
+.sig-block{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid #ddd}
+.sig-col{text-align:center;width:45%}
+.sig-line{border-top:1px solid #333;margin-top:50px;padding-top:6px;font-size:11px}
+.footer{margin-top:30px;text-align:center;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:12px}
+@media print{body{padding:20px}}
+</style></head><body>
+<div class="header">
+  <h1>THAI AIRWAYS INTERNATIONAL</h1>
+  <h2>CALIBRATION CERTIFICATE</h2>
+  <p>LA-B Reference Standard Laboratory · Suvarnabhumi Airport Branch</p>
+  <p>ISO/IEC 17025:2017 · AS9100D</p>
+</div>
+<div class="cert-no">Certificate No: ${escHtml(certNo)}</div>
+<table>
+  <tr><td>Equipment</td><td>${escHtml(r.instrumentId)} — ${escHtml(r.instrumentName||inst?.name||'')}</td></tr>
+  <tr><td>Brand / Model</td><td>${escHtml(inst?.brand||'')} ${escHtml(inst?.model||'')}</td></tr>
+  <tr><td>Type</td><td>${escHtml(inst?.type||r.instrumentType||'')}</td></tr>
+  <tr><td>Owner</td><td>${escHtml(inst?.lab||'')}</td></tr>
+  <tr><td>Calibration Date</td><td>${escHtml(r.calFinishDate||'')}</td></tr>
+  <tr><td>Next Calibration Due</td><td>${escHtml(inst?.nextCal||'')}</td></tr>
+  <tr><td>Reference Standard</td><td>${escHtml(r.referenceStandardId||'N/A')}</td></tr>
+  <tr><td>Measured Value</td><td>${escHtml(r.measuredValue||r.measurementResult||'N/A')}</td></tr>
+  <tr><td>Expanded Uncertainty (U)</td><td>${r.uncertaintyU?'± '+escHtml(r.uncertaintyU)+' (k='+escHtml(r.uncertaintyK||'2')+')':'N/A'}</td></tr>
+  <tr><td>Environmental Conditions</td><td>${env.temp?'Temp: '+escHtml(env.temp)+'°C':'—'} · ${env.rh?'RH: '+escHtml(env.rh)+'%':'—'} · ${env.pressure?'Press: '+escHtml(env.pressure)+' hPa':'—'}</td></tr>
+  <tr><td>Result</td><td class="${r.calResult==='Pass'?'result-pass':'result-fail'}">${escHtml(r.calResult||'')}</td></tr>
+  ${r.calResult==='Fail'?`<tr><td>Reason for Failure</td><td>${escHtml(formatFailReason(r))}</td></tr>`:''}
+</table>
+<div class="sig-block">
+  <div class="sig-col">
+    <div class="sig-line">Calibrated by: ${escHtml(r.pickedUpBy||'')}<br>${escHtml(r.pickupDate||'')}</div>
+  </div>
+  <div class="sig-col">
+    <div class="sig-line">Recorded by: ${escHtml(sig.recordedBy||r.resultRecordedBy||'')}<br>${sig.recordedAt?new Date(sig.recordedAt).toLocaleString('th-TH'):''}</div>
+  </div>
+</div>
+<div class="footer">
+  This certificate is generated by SCALM (SMART Calibration Asset & Laboratory Management)<br>
+  Document generated: ${new Date().toLocaleString('th-TH')} · ${escHtml(certNo)}
+</div>
+</body></html>`;
+  const w=window.open('','_blank','width=800,height=1000');
+  if(w){ w.document.write(certHtml); w.document.close(); }
+  else showToast('critical','ไม่สามารถเปิดหน้าต่างใหม่ได้ — กรุณาอนุญาต popup');
+}
+
 function renderInstrumentHistoryPage(){
   const dl=document.getElementById('ihInstrumentOptions');
   if(dl) dl.innerHTML=getDB().map(r=>`<option value="${escHtml(r.id)}">${escHtml(r.id)} — ${escHtml(r.name||'')}</option>`).join('');
@@ -4120,7 +4248,10 @@ function loadInstrumentHistory(){
     <div class="panel-body" style="font-size:12px;line-height:1.8;">
       ประเภท: ${escHtml(row.type||'-')} &middot; Owner: ${escHtml(row.lab||'-')} &middot; ผู้รับผิดชอบ: ${escHtml(row.responsible||'-')}<br>
       สอบเทียบล่าสุด: ${escHtml(row.lastCal||'-')} &middot; ครบกำหนดถัดไป: ${escHtml(row.nextCal||'-')} &middot; รวมประวัติคำขอ: ${requests.length} ครั้ง
-      ${can('editInst')?`<br><button class="btn btn-outline btn-sm" style="margin-top:6px;" onclick="openNextCalOverride('${escHtml(row.id)}')">📅 แก้ไขครบกำหนดเอง (กรณีพิเศษ)</button>`:''}
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+        ${can('editInst')?`<button class="btn btn-outline btn-sm" onclick="openNextCalOverride('${escHtml(row.id)}')">📅 แก้ไขครบกำหนดเอง</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="showTraceabilityChain('${escHtml(row.id)}')">🔗 Traceability Chain</button>
+      </div>
     </div>
   </div>`;
 
@@ -4191,9 +4322,25 @@ function renderInstrumentTimelineCard(r, receivingDocs, returnDocs){
   if(r.calFinishDate){
     let extra=`ผล: ${r.calResult==='Pass'?'<span class="badge badge-green">Pass</span>':r.calResult==='Fail'?'<span class="badge badge-red">Fail</span>':'-'}`;
     if(r.calResult==='Fail') extra+=` &middot; เหตุผลที่ไม่ผ่าน: ${formatFailReason(r)}`;
-    if(r.measurementResult && canSeeSensitiveData) extra+=` &middot; ค่าที่วัดได้: ${escHtml(r.measurementResult)}`;
-    if(r.referenceStandardId && canSeeSensitiveData) extra+=` &middot; Reference Standard: ${escHtml(r.referenceStandardId)}`;
-    steps.push(ihStep(r.calResult==='Fail'?'🚨':'✅','บันทึกผลสอบเทียบ', r.calFinishDate, r.resultRecordedBy, extra));
+    if(canSeeSensitiveData){
+      if(r.measuredValue) extra+=` &middot; ค่า: ${escHtml(r.measuredValue)}`;
+      if(r.uncertaintyU) extra+=` &middot; U: ±${escHtml(r.uncertaintyU)} (k=${escHtml(r.uncertaintyK||'2')})`;
+      if(!r.measuredValue && r.measurementResult) extra+=` &middot; ค่าที่วัดได้: ${escHtml(r.measurementResult)}`;
+      if(r.referenceStandardId) extra+=` &middot; Ref Std: ${escHtml(r.referenceStandardId)}`;
+    }
+    // Environmental Conditions
+    const env=r.envConditions||{};
+    if(env.temp||env.rh||env.pressure){
+      extra+=` &middot; 🌡️ ${env.temp?env.temp+'°C':'—'} / ${env.rh?env.rh+'%RH':'—'}${env.pressure?' / '+env.pressure+'hPa':''}`;
+    }
+    // e-Signature
+    const sig=r.eSignature;
+    if(sig){
+      extra+=`<div style="margin-top:4px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:4px;">✍️ ลงนามโดย: ${escHtml(sig.recordedBy)} (${escHtml(sig.recordedByRole||'')}) เมื่อ ${sig.recordedAt?new Date(sig.recordedAt).toLocaleString('th-TH'):'-'}</div>`;
+    }
+    // Certificate button
+    extra+=`<div style="margin-top:6px;"><button class="btn btn-outline btn-sm" onclick="generateCertificate('${escHtml(r.id)}')">📜 ออกใบรับรอง (Certificate)</button></div>`;
+    steps.push(ihStep(r.calResult==='Fail'?'🚨':'✅','บันทึกผลสอบเทียบ', r.calFinishDate, sig?sig.recordedBy:r.resultRecordedBy, extra));
   }
   if(r.nonConformanceResolvedBy){
     steps.push(ihStep('✅','ปิดกรณี Non-Conformance', r.nonConformanceResolvedDate, r.nonConformanceResolvedBy, 'คืนสู่การใช้งานปกติ'));
@@ -5032,6 +5179,18 @@ function renderReceivingSection(){
     }
   }
 
+// ════════════════════════════════════════════════════════════
+// ENVIRONMENTAL CONDITIONS — ประเภทเครื่องมือที่ควรบันทึกสภาวะแวดล้อม
+// ════════════════════════════════════════════════════════════
+const ENV_REQUIRED_TYPES=['dimension','pressure','weight','mass','altitude','airspeed'];
+const ENV_RECOMMENDED_TYPES=['electrical','torque','force','temperature','rotation','vibration'];
+function getEnvLevel(type){
+  const t=(type||'').toLowerCase();
+  if(ENV_REQUIRED_TYPES.some(k=>t.includes(k))) return 'required';
+  if(ENV_RECOMMENDED_TYPES.some(k=>t.includes(k))) return 'recommended';
+  return 'optional';
+}
+
   // ── บันทึกผลการสอบเทียบ — เฉพาะรายการที่ AWM เบิกไปแล้วและยังไม่บันทึกผล ──
   const completeTbody=document.getElementById('completeEligibleTbody');
   const refDl=document.getElementById('refStandardOptions');
@@ -5042,13 +5201,27 @@ function renderReceivingSection(){
     const completable=getCalRequests().filter(r=>r.pickedUpBy && !r.calFinishDate);
     if(completable.length===0){ completeTbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:16px;">ไม่มีรายการรอบันทึกผล</td></tr>`; }
     else{
-      completeTbody.innerHTML=completable.map(r=>`<tr>
+      completeTbody.innerHTML=completable.map(r=>{
+        const instType=(r.instrumentType||r.instrumentName||'').toLowerCase();
+        const envLevel=getEnvLevel(instType);
+        const envHint=envLevel==='required'?'<span style="color:var(--text-danger);font-size:10px;">* ต้องบันทึก</span>':envLevel==='recommended'?'<span style="color:var(--text-warning);font-size:10px;">แนะนำ</span>':'<span style="color:var(--text-muted);font-size:10px;">ไม่บังคับ</span>';
+        return `<tr>
         <td><span class="inst-id">${escHtml(r.instrumentId)}</span></td>
         <td>${escHtml(r.instrumentName||'–')}</td>
         <td>${escHtml(r.pickedUpBy||'–')}</td>
         <td><input class="form-input" type="date" id="completeDate_${r.id}" style="width:auto;"></td>
-        <td><input class="form-input" list="refStandardOptions" id="refStandard_${r.id}" placeholder="EQ No. ของ Standard (ถ้ามี)" style="width:140px;"></td>
-        <td><input class="form-input" id="uncertainty_${r.id}" placeholder="เช่น 10.02 ± 0.05 mm" style="width:160px;"></td>
+        <td><input class="form-input" list="refStandardOptions" id="refStandard_${r.id}" placeholder="EQ No." style="width:110px;"></td>
+        <td><input class="form-input" id="measuredVal_${r.id}" placeholder="เช่น 10.02 mm" style="width:110px;"></td>
+        <td><input class="form-input" id="uncertU_${r.id}" placeholder="เช่น 0.05" style="width:70px;" type="number" step="any" min="0"></td>
+        <td><input class="form-input" id="uncertK_${r.id}" placeholder="2" style="width:45px;" type="number" step="any" min="1" value="2"></td>
+        <td>
+          <div style="font-size:10px;margin-bottom:2px;">${envHint}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <input class="form-input" id="envTemp_${r.id}" placeholder="°C" style="width:52px;" type="number" step="0.1">
+            <input class="form-input" id="envRH_${r.id}" placeholder="%RH" style="width:52px;" type="number" step="0.1">
+            <input class="form-input" id="envPress_${r.id}" placeholder="hPa" style="width:60px;" type="number" step="0.1">
+          </div>
+        </td>
         <td>
           <select class="form-input" id="completeResult_${r.id}" style="width:auto;" onchange="toggleFailReasonInputs('${r.id}', this.value)">
             <option value="">— เลือก —</option>
@@ -5067,7 +5240,7 @@ function renderReceivingSection(){
           </div>
         </td>
         <td><button class="btn btn-primary btn-sm" onclick="recordCalResult('${r.id}')">✅ บันทึกผล</button></td>
-      </tr>`).join('');
+      </tr>`;}).join('');
     }
   }
 
@@ -5248,7 +5421,32 @@ function recordCalResult(id){
   list[idx].calFinishDate=finishDate;
   list[idx].calResult=resultVal;
   list[idx].referenceStandardId=refStandardId;
-  list[idx].measurementResult=(document.getElementById('uncertainty_'+id)?.value||'').trim();
+  // ── Structured Measurement & Uncertainty (Phase 1) ──
+  list[idx].measuredValue=(document.getElementById('measuredVal_'+id)?.value||'').trim();
+  list[idx].uncertaintyU=(document.getElementById('uncertU_'+id)?.value||'').trim();
+  list[idx].uncertaintyK=(document.getElementById('uncertK_'+id)?.value||'2').trim();
+  // backward compat: compose display string
+  list[idx].measurementResult = list[idx].measuredValue ? `${list[idx].measuredValue}${list[idx].uncertaintyU?' ± '+list[idx].uncertaintyU:''}${list[idx].uncertaintyK&&list[idx].uncertaintyK!=='2'?' (k='+list[idx].uncertaintyK+')':''}` : '';
+  // ── Environmental Conditions ──
+  const envTemp=(document.getElementById('envTemp_'+id)?.value||'').trim();
+  const envRH=(document.getElementById('envRH_'+id)?.value||'').trim();
+  const envPress=(document.getElementById('envPress_'+id)?.value||'').trim();
+  list[idx].envConditions={temp:envTemp, rh:envRH, pressure:envPress};
+  // เตือนถ้าไม่ได้กรอก env ในประเภทที่ต้องบันทึก
+  const instType=(list[idx].instrumentType||list[idx].instrumentName||'').toLowerCase();
+  const envLevel=getEnvLevel(instType);
+  let envWarning='';
+  if(envLevel==='required' && (!envTemp || !envRH)){
+    if(!confirm(`⚠ เครื่องมือประเภทนี้ควรบันทึกสภาวะแวดล้อม (อุณหภูมิ/ความชื้น) ตาม ISO 17025\n\nกด OK เพื่อบันทึกต่อโดยไม่มีค่าสภาวะแวดล้อม\nกด Cancel เพื่อกลับไปกรอก`)) return;
+    envWarning=' (ไม่ได้บันทึกสภาวะแวดล้อม)';
+  }
+  // ── Electronic Signature (e-Signature) ──
+  list[idx].eSignature={
+    recordedBy: currentUser?(currentUser.displayName||currentUser.username):'ไม่ทราบผู้ใช้',
+    recordedByUsername: currentUser?currentUser.username:'',
+    recordedByRole: currentUser?currentUser.role:'',
+    recordedAt: new Date().toISOString(),
+  };
   list[idx].failReason=failReason;
   list[idx].failReasonOtherText=failReason==='OT'?failReasonOtherText:'';
   list[idx].resultRecordedBy=currentUser?(currentUser.displayName||currentUser.username):'ไม่ทราบผู้ใช้';
@@ -5269,8 +5467,7 @@ function recordCalResult(id){
     refreshDashboard(); renderInstrumentTable();
   }
 
-  logAudit(list[idx].instrumentId, `LA-B Planner ${list[idx].resultRecordedBy} บันทึกผลการสอบเทียบ — วันที่ Cal.: ${finishDate} ผล: ${resultVal}${refStandardId?` — Reference Standard: ${refStandardId}`:''}`);
-  if(resultVal==='Fail'){
+  logAudit(list[idx].instrumentId, `LA-B Planner ${list[idx].eSignature.recordedBy} บันทึกผลการสอบเทียบ — วันที่ Cal.: ${finishDate} ผล: ${resultVal}${refStandardId?` — Reference Standard: ${refStandardId}`:''}${list[idx].measuredValue?` — ค่า: ${list[idx].measurementResult}`:''}${envTemp?` — สภาวะ: ${envTemp}°C ${envRH}%RH${envPress?' '+envPress+'hPa':''}`:''}${envWarning}`);  if(resultVal==='Fail'){
     // ── Non-conformance: ระงับใช้งานเครื่องมือ + เปิดกรณีให้ QA ตรวจสอบ ตาม ISO/IEC 17025 ──
     list[idx].nonConformanceOpen=true;
     list[idx].nonConformanceResolvedBy=null;

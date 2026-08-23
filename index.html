@@ -1381,7 +1381,7 @@
   <div class="flex-row" style="margin-bottom:16px;">
     <div class="spacer"></div>
     <button class="btn btn-outline" onclick="openModal()">＋ เพิ่มรายการ</button>
-    <button class="btn btn-outline" onclick="renderTodayPage()">🔄 จัดลำดับใหม่</button>
+    <button class="btn btn-outline" onclick="renderTodayPage(); showToast('save','🔄 Refresh เรียบร้อย');">🔄 Refresh หน้าจอ</button>
     <button class="btn btn-outline" onclick="clearManualQueueOrder()" title="ยกเลิกการปรับลำดับเองของวันนี้ กลับไปใช้คะแนนอัตโนมัติ">↩️ ยกเลิกการปรับลำดับเอง</button>
     <button class="btn btn-primary" onclick="showToast('daily')">📤 ส่งแผนให้ทีม</button>
   </div>
@@ -3997,7 +3997,7 @@ function fmtTime(mins){ const h=Math.floor(mins/60)%24,m=mins%60; return `${Stri
 function generateTodaySchedule(db){
   db=db||getDB(); if(db.length===0) return [];
   const workload=computeWorkloadMap(db);
-  let queue=db.filter(r=>{ const st=computeStatus(r); return st==='เกินกำหนด'||st==='ใกล้ครบ'; })
+  let queue=db.filter(r=>{ const st=computeStatus(r); return !isInactiveStatus(st) && (st==='เกินกำหนด'||st==='ใกล้ครบ'); })
     .map(r=>({row:r,score:computePriorityScore(r,workload),status:computeStatus(r),days:daysUntilDue(r)}))
     .sort((a,b)=>b.score-a.score);
   // ── รองรับกรณี Urgent: LA-B Planner ปรับลำดับคิวเองสำหรับวันนี้ (มีสิทธิ์เฉพาะ LA-B Planner) ──

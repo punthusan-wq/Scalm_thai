@@ -3884,9 +3884,18 @@ function buildTypeTabs(){
   const db = getDB();
   const container = document.getElementById('typeTabs');
   if(!container) return;
-  // Count per type dynamically from actual data
+  // Filter by active/inactive + scope first
+  const showInactive = instSubtabMode === 'inactive';
+  let filtered = db.filter(r => {
+    const st = computeStatus(r);
+    return showInactive ? isInactiveStatus(st) : !isInactiveStatus(st);
+  });
+  if(instScopeFilter !== 'all'){
+    filtered = filtered.filter(r => getCalScope(r) === instScopeFilter);
+  }
+  // Count per type dynamically from filtered data
   const counts = {};
-  db.forEach(r => {
+  filtered.forEach(r => {
     const t = (r.type||'').trim();
     if(!t) return;
     counts[t] = (counts[t]||0) + 1;
@@ -3894,7 +3903,7 @@ function buildTypeTabs(){
   // Sort types by count descending
   const sortedTypes = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
 
-  let html = `<div class="type-tab${instCurrentType==='ทั้งหมด'?' active':''}" data-type="ทั้งหมด" onclick="selectTypeTab(this)">📦 ทั้งหมด <span class="type-tab-count">${db.length}</span></div>`;
+  let html = `<div class="type-tab${instCurrentType==='ทั้งหมด'?' active':''}" data-type="ทั้งหมด" onclick="selectTypeTab(this)">📦 ทั้งหมด <span class="type-tab-count">${filtered.length}</span></div>`;
   sortedTypes.forEach(t => {
     const icon = TYPE_ICONS[t] || '🔧';
     html += `<div class="type-tab${instCurrentType===t?' active':''}" data-type="${escHtml(t)}" onclick="selectTypeTab(this)">${icon} ${escHtml(t)} <span class="type-tab-count">${counts[t]}</span></div>`;
@@ -3917,10 +3926,19 @@ function selectTypeTab(el){
 
 function refreshInstChipCounts(db){
   db=db||getDB();
-  // Filter by current type tab first
-  let subset = db;
+  // Filter by active/inactive + scope first
+  const showInactive = instSubtabMode === 'inactive';
+  let base = db.filter(r => {
+    const st = computeStatus(r);
+    return showInactive ? isInactiveStatus(st) : !isInactiveStatus(st);
+  });
+  if(instScopeFilter !== 'all'){
+    base = base.filter(r => getCalScope(r) === instScopeFilter);
+  }
+  // Filter by current type tab
+  let subset = base;
   if(instCurrentType !== 'ทั้งหมด'){
-    subset = db.filter(r => r.type === instCurrentType);
+    subset = base.filter(r => r.type === instCurrentType);
   }
   const chips=document.querySelectorAll('#instChips .chip');
   if(chips.length<5) return;
@@ -3930,7 +3948,7 @@ function refreshInstChipCounts(db){
     if(st==='เกินกำหนด') overdue++;
     else if(st==='ใกล้ครบ') due7++;
     else normal++;
-    if((r.lab||'').toLowerCase().match(/external|nimt|ext/)) ext++;
+    if(getCalScope(r)==='external') ext++;
   });
   chips[0].textContent=`ทั้งหมด (${subset.length})`;
   chips[1].textContent=`🚨 เกินกำหนด (${overdue})`;

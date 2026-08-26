@@ -1489,9 +1489,15 @@
   </div>
 
   <!-- ACTIVE / INACTIVE SUB-TABS -->
-  <div class="subtab-bar" style="margin-bottom:12px;">
+  <div class="subtab-bar" style="margin-bottom:8px;">
     <div class="subtab-item active" id="instSubtab-active" onclick="switchInstSubtab('active')">✅ ใช้งานอยู่ <span class="badge badge-green" id="instActiveCount" style="margin-left:4px;">0</span></div>
     <div class="subtab-item" id="instSubtab-inactive" onclick="switchInstSubtab('inactive')">🚫 ยกเลิก/ไม่ใช้งาน <span class="badge badge-gray" id="instInactiveCount" style="margin-left:4px;">0</span></div>
+  </div>
+  <!-- SCOPE FILTER: Internal / External -->
+  <div class="subtab-bar" style="margin-bottom:12px;">
+    <div class="subtab-item active" id="instScope-all" onclick="switchInstScope('all')">ทั้งหมด <span class="badge badge-blue" id="instScopeAllCount" style="margin-left:4px;">0</span></div>
+    <div class="subtab-item" id="instScope-internal" onclick="switchInstScope('internal')">🔬 สอบเทียบภายใน <span class="badge badge-green" id="instScopeIntCount" style="margin-left:4px;">0</span></div>
+    <div class="subtab-item" id="instScope-external" onclick="switchInstScope('external')">🏢 ส่งภายนอก (Master) <span class="badge badge-orange" id="instScopeExtCount" style="margin-left:4px;">0</span></div>
   </div>
 
   <!-- TYPE TABS -->
@@ -2673,6 +2679,7 @@
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.16 คลัง SOP สอบเทียบ (📋 Procedure Library)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.17 Risk Matrix (⚠️ ระดับความเสี่ยง)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.18 Drift Analysis (📊 วิเคราะห์แนวโน้ม)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.19 ส่งสอบเทียบภายนอก (🏢 External Cal)</a>
       <a href="#ug-owner" style="color:var(--accent-cyan);">4. สำหรับ Owner</a>
       <a href="#ug-awm" style="color:var(--accent-cyan);">5. สำหรับ AWM (Aircraft Workshop Mechanic)</a>
       <a href="#ug-manager" style="color:var(--accent-cyan);">6. สำหรับ LA-B Manager</a>
@@ -2802,6 +2809,25 @@
       <div class="section-div">3.18 Drift Analysis / วิเคราะห์แนวโน้มค่าเบี่ยงเบน (📊)</div>
       <p>ที่หน้า <strong>"ประวัติเครื่องมือ"</strong> กดปุ่ม <strong>"📊 Drift Analysis"</strong> → ระบบดึงผลสอบเทียบย้อนหลังทุกรอบของเครื่องมือตัวนั้นมาพล็อตกราฟ แสดงแนวโน้ม (trend line) ว่าค่าเบี่ยงเบนเพิ่มขึ้นหรือลดลง พร้อมแนะนำว่าควรปรับรอบสอบเทียบหรือไม่</p>
       <p style="margin-top:6px;">ต้องมีผลสอบเทียบอย่างน้อย <strong>2 รอบ</strong> ถึงจะวิเคราะห์ได้ — ยิ่งมีหลายรอบยิ่งแม่นยำ ผู้ใช้ไม่ต้องทำอะไรเพิ่ม ระบบใช้ข้อมูลที่บันทึกอยู่แล้ว</p>
+      <div class="section-div">3.19 ส่งสอบเทียบภายนอก / External Calibration Tracking (🏢)</div>
+      <p>สำหรับ Reference Standard (Master) ที่ต้องส่งไปสอบเทียบภายนอก (เช่น NIMT, Fluke, Keysight):</p>
+      <p style="margin-top:6px;"><strong>ตั้งค่าเครื่องมือ:</strong> กดแก้ไขเครื่องมือ → เลือก "ขอบเขตการสอบเทียบ" เป็น <strong>"🏢 External"</strong> → เครื่องมือจะแสดงใน sub-tab "ส่งภายนอก (Master)" แยกจาก Internal</p>
+      <p style="margin-top:6px;"><strong>จัดการส่ง:</strong> กดปุ่ม <strong>"🏢 จัดการส่งภายนอก"</strong> ที่แถวเครื่องมือ → กรอกข้อมูล:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li>สถานะ: ยังไม่ได้ส่ง → ส่งแล้ว → รอผล → รับคืนแล้ว</li>
+        <li>ชื่อ External Lab + เลข Accreditation</li>
+        <li>วันที่ส่ง / คาดว่ารับคืน / รับคืนจริง</li>
+        <li>เลข Tracking / PO</li>
+        <li>ค่าใช้จ่าย + ค่าขนส่ง (ไม่บังคับกรอก)</li>
+        <li>Link ใบรับรอง (Certificate)</li>
+      </ul>
+      <p style="margin-top:6px;"><strong>การแจ้งเตือน 4 ระดับ:</strong> ระบบเตือนล่วงหน้ามากกว่า Internal เพราะ External ใช้เวลานาน:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li><strong>90 วัน (ฟ้า):</strong> วางแผน — ติดต่อ Lab ขอใบเสนอราคา</li>
+        <li><strong>60 วัน (เหลือง):</strong> ต้องส่งแล้ว — ถ้ายังไม่ส่งอาจไม่ทันกำหนด</li>
+        <li><strong>30 วัน (แดง):</strong> เร่งด่วน — ติดตาม Lab ทุกสัปดาห์</li>
+        <li><strong>0 วัน (ระงับ):</strong> เกินกำหนด — ห้ามใช้ Master ตัวนี้</li>
+      </ul>
     </div>
   </div>
 
@@ -2899,6 +2925,13 @@
         <label class="form-label">ผู้รับผิดชอบ</label>
         <select class="form-input" id="am_responsible" onchange="toggleCustomInput('am_responsible')"></select>
         <input class="form-input" id="am_responsible_custom" placeholder="ระบุผู้รับผิดชอบใหม่" style="display:none;margin-top:6px;">
+      </div>
+      <div>
+        <label class="form-label">ขอบเขตการสอบเทียบ</label>
+        <select class="form-input" id="am_calScope">
+          <option value="internal">🔬 Internal (สอบเทียบภายใน)</option>
+          <option value="external">🏢 External (ส่งภายนอก / Master)</option>
+        </select>
       </div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
@@ -3696,11 +3729,21 @@ function refreshDashboard(){
   });
   const total=db.length;
   const active=total-inactive;
+  // External cal summary
+  const extInstruments=db.filter(r=>getCalScope(r)==='external'&&!isInactiveStatus(computeStatus(r)));
+  const extSent=extInstruments.filter(r=>r.externalCal&&(r.externalCal.status==='sent'||r.externalCal.status==='waiting')).length;
+  const extOverdue=extInstruments.filter(r=>{
+    const ext=r.externalCal||{};
+    if(ext.expectedReturn&&ext.status!=='received'){
+      return new Date(ext.expectedReturn)<new Date();
+    }
+    return false;
+  }).length;
   const pf=computePassFailStats(db);
   setKPI('kpiDone',done,`เครื่องมือ / เป้า ${active} ชิ้น (active)`);
   setKPI('kpiDue7',due7,'ต้องดำเนินการเร่งด่วน');
   setKPI('kpiOver',overdue,'ต้องระงับการใช้งาน');
-  setKPI('kpiTotal',total,inactive>0?`ทะเบียนทั้งหมด (${inactive} inactive)`:'ทะเบียน LA-B ทั้งหมด');
+  setKPI('kpiTotal',total,inactive>0?`ทะเบียนทั้งหมด (${inactive} inactive${extSent>0?', '+extSent+' ส่งภายนอก':''})`:`ทะเบียน LA-B ทั้งหมด${extSent>0?' ('+extSent+' ส่งภายนอก)':''}`);
   setKPI('kpiPass', pf.pct!==null?pf.pct.toFixed(1)+'%':'N/A', pf.known>0?`จาก ${pf.known} รายการที่มีผลตรวจ`:'ยังไม่มีข้อมูลผลตรวจ');
   const badge=document.getElementById('alertBadgeCount');
   if(badge) badge.textContent=overdue+due7;
@@ -3777,6 +3820,13 @@ let instCurrentType = 'ทั้งหมด';
 let instCurrentPage = 1;
 let instPageSize = 50;
 let instSubtabMode = 'active'; // 'active' or 'inactive'
+let instScopeFilter = 'all'; // 'all', 'internal', 'external'
+
+// ── Alert thresholds ──
+const ALERT_THRESHOLDS={
+  internal: {warn:30, urgent:7, label:'Internal'},
+  external: {plan:90, send:60, urgent:30, label:'External'},
+};
 
 function switchInstSubtab(mode){
   instSubtabMode = mode;
@@ -3784,6 +3834,47 @@ function switchInstSubtab(mode){
   document.getElementById('instSubtab-active').classList.toggle('active', mode==='active');
   document.getElementById('instSubtab-inactive').classList.toggle('active', mode==='inactive');
   renderInstrumentTable();
+}
+
+function switchInstScope(scope){
+  instScopeFilter = scope;
+  instCurrentPage = 1;
+  ['all','internal','external'].forEach(s=>{
+    const el=document.getElementById('instScope-'+s);
+    if(el) el.classList.toggle('active', s===scope);
+  });
+  renderInstrumentTable();
+}
+
+function getCalScope(row){
+  return (row.calScope||'internal').toLowerCase();
+}
+
+function computeExternalStatus(row){
+  if(getCalScope(row)!=='external') return null;
+  const ext=row.externalCal||{};
+  if(ext.status==='received') return {label:'รับคืนแล้ว',badge:'badge-green',icon:'✅'};
+  if(ext.status==='waiting') return {label:`รอผล${ext.labName?' ('+ext.labName+')':''}`,badge:'badge-orange',icon:'⏳'};
+  if(ext.status==='sent') return {label:`ส่งแล้ว${ext.sentDate?' '+ext.sentDate:''}`,badge:'badge-yellow',icon:'📤'};
+  return {label:'ยังไม่ได้ส่ง',badge:'badge-gray',icon:'📋'};
+}
+
+function computeStatusWithScope(row){
+  const baseSt=computeStatus(row);
+  if(isInactiveStatus(baseSt)) return baseSt;
+  if(getCalScope(row)==='external'){
+    if(!row.nextCal) return 'ปกติ';
+    const next=parseThaiDate(row.nextCal);
+    if(!next) return 'ปกติ';
+    const today=new Date(); today.setHours(0,0,0,0);
+    const diff=Math.ceil((next-today)/86400000);
+    if(diff<0) return 'เกินกำหนด';
+    if(diff<=30) return 'เร่งด่วน (30 วัน)';
+    if(diff<=60) return 'ต้องส่งแล้ว (60 วัน)';
+    if(diff<=90) return 'วางแผน (90 วัน)';
+    return 'ปกติ';
+  }
+  return baseSt;
 }
 let instFilteredData = []; // holds filtered rows for pagination
 
@@ -3857,6 +3948,13 @@ function renderInstrumentTable(filter){
   const allInactive=db.filter(r=>isInactiveStatus(computeStatus(r)));
   const acEl=document.getElementById('instActiveCount'); if(acEl) acEl.textContent=allActive.length;
   const icEl=document.getElementById('instInactiveCount'); if(icEl) icEl.textContent=allInactive.length;
+  // อัพเดท scope counts
+  const scopeBase=instSubtabMode==='inactive'?allInactive:allActive;
+  const intCount=scopeBase.filter(r=>getCalScope(r)==='internal').length;
+  const extCount=scopeBase.filter(r=>getCalScope(r)==='external').length;
+  const saEl=document.getElementById('instScopeAllCount'); if(saEl) saEl.textContent=scopeBase.length;
+  const siEl=document.getElementById('instScopeIntCount'); if(siEl) siEl.textContent=intCount;
+  const seEl=document.getElementById('instScopeExtCount'); if(seEl) seEl.textContent=extCount;
   if(db.length===0) return;
   const tbody=document.querySelector('#instTable tbody'); if(!tbody) return;
 
@@ -3873,6 +3971,11 @@ function renderInstrumentTable(filter){
     const st = computeStatus(r);
     return showInactive ? isInactiveStatus(st) : !isInactiveStatus(st);
   });
+
+  // 1.6) Filter by scope (Internal / External)
+  if(instScopeFilter !== 'all'){
+    rows = rows.filter(r => getCalScope(r) === instScopeFilter);
+  }
 
   // 2) Filter by type tab
   if(instCurrentType !== 'ทั้งหมด'){
@@ -3918,18 +4021,31 @@ function renderInstrumentTable(filter){
   const canEdit=can('editInst');
   pageRows.forEach(row=>{
     const st=computeStatus(row);
+    const isExt=getCalScope(row)==='external';
+    const extSt=isExt?computeExternalStatus(row):null;
+    const extTimeSt=isExt?computeStatusWithScope(row):null;
     const lcBadge=getLifecycleBadge(st);
-    const statusBadge=lcBadge ? lcBadge : st==='เกินกำหนด'?`<span class="badge badge-red">🚨 เกินกำหนด</span>`:st==='ใกล้ครบ'?`<span class="badge badge-yellow">⏰ ใกล้ครบ</span>`:`<span class="badge badge-green">✓ ใช้งานได้</span>`;
+    let statusBadge;
+    if(lcBadge) statusBadge=lcBadge;
+    else if(isExt && extTimeSt && extTimeSt!=='ปกติ' && extTimeSt!=='เกินกำหนด'){
+      const extColors={'วางแผน (90 วัน)':'badge-blue','ต้องส่งแล้ว (60 วัน)':'badge-yellow','เร่งด่วน (30 วัน)':'badge-red'};
+      statusBadge=`<span class="badge ${extColors[extTimeSt]||'badge-blue'}">${extTimeSt}</span>`;
+    } else {
+      statusBadge=st==='เกินกำหนด'?`<span class="badge badge-red">🚨 เกินกำหนด</span>`:st==='ใกล้ครบ'?`<span class="badge badge-yellow">⏰ ใกล้ครบ</span>`:`<span class="badge badge-green">✓ ใช้งานได้</span>`;
+    }
+    // External tracking badge
+    const extTrackBadge=extSt?` <span class="badge ${extSt.badge}" style="font-size:9px;">${extSt.icon} ${extSt.label}</span>`:'';
+    const scopeBadge=isExt?'<span class="badge badge-orange" style="font-size:9px;">External</span> ':'';
     const isInactive=isInactiveStatus(st);
     const nextCalDisplay=isInactive?'<span style="color:var(--text-muted);">—</span>':row.nextCal?(st==='เกินกำหนด'?`<strong style="color:var(--accent-red);">${row.nextCal} 🚨</strong>`:st==='ใกล้ครบ'?`<strong style="color:var(--accent-yellow);">${row.nextCal} ⚠</strong>`:row.nextCal):'–';
-    const isExt=(row.lab||'').toLowerCase().match(/external|nimt|ext/);
     const labBadge=isExt?`<span class="badge badge-orange">External</span>`:`<span class="badge badge-green">Internal</span>`;
     const actionBtn=st==='เกินกำหนด'?`<button class="btn btn-danger btn-sm" onclick="sendAlert()">แจ้งเตือน</button> ${canEdit?`<button class="btn btn-outline btn-sm" onclick="editInstrument('${escHtml(row.id||'')}')">✏️ แก้ไข</button>`:''}`
       :canEdit?`<button class="btn btn-outline btn-sm" onclick="editInstrument('${escHtml(row.id||'')}')">✏️ แก้ไข</button>`:`<button class="btn btn-outline btn-sm locked-btn" title="ไม่มีสิทธิ์แก้ไข">🔒 ดูเท่านั้น</button>`;
+    const extActionBtn=isExt&&canEdit?` <button class="btn btn-outline btn-sm" onclick="openExternalCalModal('${escHtml(row.id||'')}')">🏢 จัดการส่งภายนอก</button>`:'';
     const statusBtn=canEdit?`<button class="btn btn-outline btn-sm" onclick="openStatusChangeModal('${escHtml(row.id||'')}')">🔄</button>`:'';
     const qrBtn=`<button class="btn btn-outline btn-sm" onclick="showQR('${escHtml(row.id||'')}')">📱 QR</button>`;
     const wfCell=workflowCellHtml(row);
-    tbody.insertAdjacentHTML('beforeend',`<tr><td><span class="inst-id">${escHtml(row.id||'–')}</span></td><td>${escHtml(row.name||'–')}</td><td>${escHtml(row.brand||'')} ${escHtml(row.model||'')}</td><td><span class="badge badge-blue">${escHtml(row.type||'–')}</span></td><td>${escHtml(row.lastCal||'–')}</td><td>${nextCalDisplay}</td><td>${escHtml(row.interval?row.interval+' เดือน':'–')}</td><td>${labBadge}</td><td>${statusBadge} ${statusBtn}</td><td>${qrBtn}</td><td>${wfCell}</td><td>${actionBtn}</td></tr>`);
+    tbody.insertAdjacentHTML('beforeend',`<tr><td><span class="inst-id">${escHtml(row.id||'–')}</span></td><td>${escHtml(row.name||'–')}</td><td>${escHtml(row.brand||'')} ${escHtml(row.model||'')}</td><td><span class="badge badge-blue">${escHtml(row.type||'–')}</span></td><td>${escHtml(row.lastCal||'–')}</td><td>${nextCalDisplay}</td><td>${escHtml(row.interval?row.interval+' เดือน':'–')}</td><td>${labBadge}</td><td>${scopeBadge}${statusBadge}${extTrackBadge} ${statusBtn}</td><td>${qrBtn}</td><td>${wfCell}</td><td>${actionBtn}${extActionBtn}</td></tr>`);
   });
 
   // 7) Render pagination
@@ -7580,6 +7696,9 @@ function editInstrument(eqId){
   setSelect('am_interval', row.interval);
   setSelect('am_lab', row.lab);
   setSelect('am_responsible', row.responsible);
+  // calScope
+  const scopeSel=document.getElementById('am_calScope');
+  if(scopeSel) scopeSel.value=row.calScope||'internal';
 
   // ── EQ No. ล็อคไม่ให้แก้ (เป็น primary key) ──
   const eqField=document.getElementById('am_id');
@@ -7689,6 +7808,116 @@ function closeStatusModal(){
   const m=document.getElementById('statusChangeModal');
   if(m) m.remove();
 }
+
+// ════════════════════════════════════════════════════════════
+// EXTERNAL CALIBRATION TRACKING — จัดการส่งสอบเทียบภายนอก
+// ════════════════════════════════════════════════════════════
+function openExternalCalModal(eqId){
+  if(!can('editInst')){ showToast('critical','ไม่มีสิทธิ์'); return; }
+  const db=getDB();
+  const row=db.find(r=>String(r.id).toUpperCase()===eqId.toUpperCase());
+  if(!row){ showToast('critical',`ไม่พบเครื่องมือ "${eqId}"`); return; }
+  const ext=row.externalCal||{};
+  const modal=document.createElement('div');
+  modal.className='modal-overlay show';
+  modal.id='extCalModal';
+  modal.innerHTML=`<div class="modal-card" style="max-width:480px;"><div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;">🏢 จัดการส่งสอบเทียบภายนอก</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">${escHtml(row.id)} — ${escHtml(row.name||'')}</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">สถานะ *</label>
+      <select class="auth-input" id="ext_status" style="width:100%;">
+        <option value="" ${!ext.status?'selected':''}>— ยังไม่ได้ส่ง —</option>
+        <option value="sent" ${ext.status==='sent'?'selected':''}>📤 ส่งแล้ว</option>
+        <option value="waiting" ${ext.status==='waiting'?'selected':''}>⏳ รอผล</option>
+        <option value="received" ${ext.status==='received'?'selected':''}>✅ รับคืนแล้ว</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">ชื่อ External Lab</label>
+        <input class="auth-input" id="ext_labName" value="${escHtml(ext.labName||'')}" placeholder="เช่น NIMT, Fluke" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">เลข Accreditation</label>
+        <input class="auth-input" id="ext_accreditNo" value="${escHtml(ext.accreditNo||'')}" placeholder="เลขที่รับรอง" style="width:100%;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">วันที่ส่ง</label>
+        <input class="auth-input" id="ext_sentDate" type="date" value="${escHtml(ext.sentDate||'')}" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">คาดว่ารับคืน</label>
+        <input class="auth-input" id="ext_expectedReturn" type="date" value="${escHtml(ext.expectedReturn||'')}" style="width:100%;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">วันที่รับคืนจริง</label>
+        <input class="auth-input" id="ext_receivedDate" type="date" value="${escHtml(ext.receivedDate||'')}" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">เลข Tracking / PO</label>
+        <input class="auth-input" id="ext_trackingNo" value="${escHtml(ext.trackingNo||'')}" placeholder="เลขพัสดุ / PO" style="width:100%;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">💰 ค่าใช้จ่าย (บาท) — ไม่บังคับ</label>
+        <input class="auth-input" id="ext_cost" type="number" step="0.01" min="0" value="${ext.cost||''}" placeholder="เช่น 15000" style="width:100%;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">ค่าขนส่ง (บาท) — ไม่บังคับ</label>
+        <input class="auth-input" id="ext_shippingCost" type="number" step="0.01" min="0" value="${ext.shippingCost||''}" placeholder="เช่น 500" style="width:100%;">
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Link ใบรับรอง (Certificate)</label>
+      <input class="auth-input" id="ext_certLink" type="url" value="${escHtml(ext.certLink||'')}" placeholder="https://drive.google.com/..." style="width:100%;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">หมายเหตุ</label>
+      <textarea class="auth-input" id="ext_notes" rows="2" style="width:100%;resize:vertical;" placeholder="บันทึกเพิ่มเติม">${escHtml(ext.notes||'')}</textarea>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveExternalCal('${escHtml(row.id)}')">💾 บันทึก</button>
+      <button class="btn btn-outline" onclick="document.getElementById('extCalModal').remove()">ยกเลิก</button>
+    </div>
+  </div></div>`;
+  document.body.appendChild(modal);
+}
+
+function saveExternalCal(eqId){
+  const db=getDB();
+  const idx=db.findIndex(r=>String(r.id).toUpperCase()===eqId.toUpperCase());
+  if(idx<0) return;
+  const oldExt=db[idx].externalCal||{};
+  const newExt={
+    status: document.getElementById('ext_status').value,
+    labName: document.getElementById('ext_labName').value.trim(),
+    accreditNo: document.getElementById('ext_accreditNo').value.trim(),
+    sentDate: document.getElementById('ext_sentDate').value,
+    expectedReturn: document.getElementById('ext_expectedReturn').value,
+    receivedDate: document.getElementById('ext_receivedDate').value,
+    trackingNo: document.getElementById('ext_trackingNo').value.trim(),
+    cost: document.getElementById('ext_cost').value?parseFloat(document.getElementById('ext_cost').value):null,
+    shippingCost: document.getElementById('ext_shippingCost').value?parseFloat(document.getElementById('ext_shippingCost').value):null,
+    certLink: document.getElementById('ext_certLink').value.trim(),
+    notes: document.getElementById('ext_notes').value.trim(),
+    updatedAt: new Date().toISOString(),
+    updatedBy: currentUser?(currentUser.displayName||currentUser.username):'',
+  };
+  db[idx].externalCal=newExt;
+  db[idx].calScope='external';
+  saveDB(db);
+  const statusLabels={'':'ยังไม่ได้ส่ง','sent':'ส่งแล้ว','waiting':'รอผล','received':'รับคืนแล้ว'};
+  logAudit(eqId, `External Cal: สถานะ "${statusLabels[newExt.status]||newExt.status}" Lab: ${newExt.labName||'-'}${newExt.cost?' ค่าใช้จ่าย: '+newExt.cost+' บาท':''}${newExt.shippingCost?' + ขนส่ง: '+newExt.shippingCost+' บาท':''}`);
+  document.getElementById('extCalModal').remove();
+  refreshDashboard(); renderInstrumentTable();
+  showToast('save',`บันทึกข้อมูล External Cal — ${eqId} เรียบร้อย`);
+}
 function confirmStatusChange(eqId){
   const newStatus=document.getElementById('scm_newStatus').value;
   const reason=document.getElementById('scm_reason').value.trim();
@@ -7781,7 +8010,7 @@ function saveAndClose(){
     }
   }
 
-  const record={ id, name, type, brand, model, lastCal, interval, nextCal, lab, responsible };
+  const record={ id, name, type, brand, model, lastCal, interval, nextCal, lab, responsible, calScope: document.getElementById('am_calScope')?.value||'internal' };
 
   const db=getDB();
   const existIdx=db.findIndex(r=>String(r.id).trim().toUpperCase()===id);

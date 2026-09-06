@@ -2305,6 +2305,7 @@
       </table>
       <div id="suggestBulkActionBar" style="display:none;padding:12px 16px;border-top:1px solid var(--border);">
         <button class="btn btn-primary" onclick="bulkCreateSuggestedRequests()">➕ สร้างคำขอสำหรับรายการที่เลือก (<span id="suggestSelectedCount">0</span>)</button>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">📅 งานที่ครบกำหนดตามรอบ — ระบบแนะนำมาให้ ติ๊กเลือกแล้วกดสร้างทีเดียว</div>
       </div>
     </div>
   </div>
@@ -2334,7 +2335,8 @@
         </select>
         <input class="form-input" id="cr_remark_other" placeholder="ระบุเหตุผล" style="display:none;margin-top:6px;">
       </div>
-      <button class="btn btn-primary" style="margin-top:8px;" onclick="submitCalRequest()">💾 สร้างใบ Calibration Request</button>
+      <button class="btn btn-sm" style="margin-top:8px;background:var(--accent-orange);color:#fff;border:none;padding:8px 20px;font-size:13px;" onclick="submitCalRequest()">🚨 สร้างใบ Calibration Request</button>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">⚡ งาน Urgent ที่อยู่นอกแผนปกติ — เครื่องมือตก/หลังซ่อม/เครื่องใหม่/ลูกค้าขอพิเศษ</div>
     </div>
   </div>
 

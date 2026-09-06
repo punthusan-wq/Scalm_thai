@@ -632,6 +632,7 @@
   .badge-red { background: rgba(229,57,53,0.15); color: var(--accent-red); border: 1px solid rgba(229,57,53,0.3); }
   .badge-blue { background: rgba(30,111,207,0.15); color: #5b9ef7; border: 1px solid rgba(30,111,207,0.3); }
   .badge-orange { background: rgba(255,109,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,109,0,0.3); }
+  @keyframes pulse-border { 0%{box-shadow:0 0 0 0 rgba(0,200,83,0.4)} 70%{box-shadow:0 0 0 8px rgba(0,200,83,0)} 100%{box-shadow:none} }
   .badge-gray { background: rgba(150,150,150,0.15); color: #999; border: 1px solid rgba(150,150,150,0.3); }
   .badge-purple { background: rgba(130,80,200,0.15); color: #b580e0; border: 1px solid rgba(130,80,200,0.3); }
   .badge-grey { background: rgba(74,96,128,0.3); color: var(--text-secondary); border: 1px solid var(--border); }
@@ -2292,6 +2293,28 @@
     <div>
       <h2 style="font-size:16px;font-weight:800;">📄 คำขอสอบเทียบ/Calibration Request</h2>
       <p style="font-size:11px;color:var(--text-secondary);margin-top:4px;" id="calReqSubtitle">ใบขอสอบเทียบ — ติดตามสถานะการนัดหมายสอบเทียบ</p>
+    </div>
+    <div class="spacer"></div>
+    <div style="position:relative;" id="calReqActionDropdown">
+      <button class="btn btn-primary" onclick="toggleCalReqDropdown()" style="font-size:13px;padding:8px 18px;">📋 สร้างคำขอ / ตรวจรับ / ส่งคืน ▾</button>
+      <div id="calReqDropdownMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);min-width:300px;z-index:50;overflow:hidden;">
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('calReqSuggestPanel'); closeCalReqDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📅 สร้างคำขอตามรอบ (Periodic)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">งานที่ครบกำหนดตามรอบ — ติ๊กเลือกจากรายการแนะนำ</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('calReqCreatePanel'); closeCalReqDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--accent-orange);">🚨 สร้างคำขอ Urgent (นอกแผน)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">เครื่องมือตก/หลังซ่อม/เครื่องใหม่/ลูกค้าขอพิเศษ</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('receivingDocPanel'); closeCalReqDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📦 สร้างใบตรวจรับเครื่องมือ</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">บันทึกการรับเครื่องมือเข้าห้อง Lab</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('returnDocPanel'); closeCalReqDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📤 สร้างใบส่งคืนเครื่องมือ</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">บันทึกการส่งคืนเครื่องมือให้ Owner</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -5246,6 +5269,35 @@ function prefillCalRequestForm(instrumentId){
   document.getElementById('calReqCreatePanel').scrollIntoView({behavior:'smooth', block:'center'});
   showToast('save','เติมเครื่องมือและวันนัด Cal. (จากกำหนดเดิม) ให้แล้ว — เลือกหมายเหตุ แล้วกด "สร้างใบ Calibration Request"');
 }
+// ── CalReq Action Dropdown ──
+function toggleCalReqDropdown(){
+  const menu=document.getElementById('calReqDropdownMenu');
+  if(!menu) return;
+  menu.style.display=menu.style.display==='none'?'block':'none';
+  if(menu.style.display==='block'){
+    document.addEventListener('click', closeCalReqDropdownOutside, {once:true, capture:true});
+  }
+}
+function closeCalReqDropdown(){
+  const menu=document.getElementById('calReqDropdownMenu');
+  if(menu) menu.style.display='none';
+}
+function closeCalReqDropdownOutside(e){
+  const dd=document.getElementById('calReqActionDropdown');
+  if(dd && !dd.contains(e.target)) closeCalReqDropdown();
+  else if(dd) document.addEventListener('click', closeCalReqDropdownOutside, {once:true, capture:true});
+}
+function scrollToPanel(panelId){
+  const el=document.getElementById(panelId);
+  if(el){
+    el.style.display='block';
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    el.style.animation='none';
+    el.offsetHeight;
+    el.style.animation='pulse-border 1.5s ease';
+  }
+}
+
 function submitCalRequest(){
   if(!isAdmin()){ showToast('critical','เฉพาะ LA-B Planner เท่านั้นที่สร้างใบ Calibration Request ได้'); return; }
   const errEl=document.getElementById('calReqError');

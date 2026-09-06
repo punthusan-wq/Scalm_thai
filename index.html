@@ -12,6 +12,15 @@
 <link rel="apple-touch-icon" href="./icon-192.png">
 <script>try{const t=localStorage.getItem('scalmTheme');if(t==='thai-airways')document.documentElement.setAttribute('data-theme','thai-airways');}catch(e){}</script>
 <style>
+  /* ══ SCROLLBAR — ให้เห็นชัดใน Dark Mode ══ */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+  [data-theme="thai-airways"] ::-webkit-scrollbar-thumb { background: rgba(97,49,119,0.4); }
+  [data-theme="thai-airways"] ::-webkit-scrollbar-thumb:hover { background: rgba(97,49,119,0.6); }
+  * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) rgba(255,255,255,0.05); }
+
   /* ══ AUTH / LOGIN ══════════════════════════════════════ */
   #authOverlay {
     position: fixed; inset: 0; z-index: 9999;
@@ -1541,15 +1550,15 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td><span class="inst-id">LA001</span></td><td>Digital Multimeter</td><td>Fluke 87V</td><td><span class="badge badge-blue">Electrical</span></td><td>15 ก.ค. 68</td><td>15 ก.ค. 69</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-green">✓ ใช้งานได้</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA001')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA001')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-outline btn-sm" onclick="editInstrument('LA001')">✏️ แก้ไข</button></td></tr>
-          <tr><td><span class="inst-id">LA003</span></td><td>Pitot Tube Static</td><td>Dwyer 166-6</td><td><span class="badge badge-red">Airspeed</span></td><td>3 ก.ค. 68</td><td><strong style="color:var(--accent-red);">5 ก.ค. 68 🚨</strong></td><td>3 เดือน</td><td><span class="badge badge-orange">External</span></td><td><span class="badge badge-red">🚨 เกินกำหนด</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA003')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA003')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-danger btn-sm" onclick="sendAlert()">แจ้งเตือน</button></td></tr>
-          <tr><td><span class="inst-id">LA009</span></td><td>Altimeter Barometric</td><td>Kollsman B-1000</td><td><span class="badge badge-orange">Pressure</span></td><td>3 ม.ค. 68</td><td><strong style="color:var(--accent-red);">3 ก.ค. 68 🚨</strong></td><td>6 เดือน</td><td><span class="badge badge-orange">External</span></td><td><span class="badge badge-red">🚨 เกินกำหนด</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA009')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA009')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-danger btn-sm" onclick="sendAlert()">แจ้งเตือน</button></td></tr>
-          <tr><td><span class="inst-id">LA012</span></td><td>Temperature Controller</td><td>Eurotherm 3216</td><td><span class="badge badge-red">Temperature</span></td><td>20 ม.ค. 68</td><td><strong style="color:var(--accent-yellow);">20 ก.ค. 68 ⚠</strong></td><td>6 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-yellow">⏰ ใกล้ครบ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA012')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA012')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-outline btn-sm">นัดหมาย</button></td></tr>
-          <tr><td><span class="inst-id">LA022</span></td><td>Pressure Gauge 100PSI</td><td>Ashcroft 1279</td><td><span class="badge badge-orange">Pressure</span></td><td>15 ก.ค. 68</td><td>15 ก.ค. 69</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-green">✓ ใช้งานได้</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA022')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA022')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-outline btn-sm" onclick="editInstrument('LA022')">✏️ แก้ไข</button></td></tr>
-          <tr><td><span class="inst-id">LA047</span></td><td>Thermocouple Type K</td><td>Omega KMQSS-125</td><td><span class="badge badge-red">Temperature</span></td><td>15 ก.ค. 68</td><td>15 ม.ค. 69</td><td>6 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-blue">● กำลังสอบ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA047')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA047')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-primary btn-sm">บันทึก</button></td></tr>
-          <tr><td><span class="inst-id">LA055</span></td><td>Tachometer Digital</td><td>Extech RPM10</td><td><span class="badge badge-blue">Rotation</span></td><td>15 ก.ค. 67</td><td>15 ก.ค. 68</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-grey">รอดำเนินการ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA055')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA055')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-outline btn-sm">เริ่ม</button></td></tr>
-          <tr><td><span class="inst-id">LA067</span></td><td>Oscilloscope 200MHz</td><td>Rigol DS1202Z</td><td><span class="badge badge-blue">Electrical</span></td><td>19 ม.ค. 68</td><td><strong style="color:var(--accent-yellow);">19 ก.ค. 68 ⚠</strong></td><td>6 เดือน</td><td><span class="badge badge-orange">External</span></td><td><span class="badge badge-yellow">⏰ ใกล้ครบ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA067')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA067')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-outline btn-sm">นัดหมาย</button></td></tr>
-          <tr><td><span class="inst-id">LA078</span></td><td>Torque Wrench Set</td><td>Snap-on TECH3FR250</td><td><span class="badge badge-orange">Torque</span></td><td>15 ก.ค. 67</td><td>15 ก.ค. 68</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-grey">รอดำเนินการ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA078')">📱 QR</button></td><td><button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('LA078')">📧 ส่งคำขอนัดหมาย</button></td><td><button class="btn btn-outline btn-sm">เริ่ม</button></td></tr>
+          <tr><td><span class="inst-id">LA001</span></td><td>Digital Multimeter</td><td>Fluke 87V</td><td><span class="badge badge-blue">Electrical</span></td><td>15 ก.ค. 68</td><td>15 ก.ค. 69</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-green">✓ ใช้งานได้</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA001')">📱 QR</button></td><td></td><td><button class="btn btn-outline btn-sm" onclick="editInstrument('LA001')">✏️ แก้ไข</button></td></tr>
+          <tr><td><span class="inst-id">LA003</span></td><td>Pitot Tube Static</td><td>Dwyer 166-6</td><td><span class="badge badge-red">Airspeed</span></td><td>3 ก.ค. 68</td><td><strong style="color:var(--accent-red);">5 ก.ค. 68 🚨</strong></td><td>3 เดือน</td><td><span class="badge badge-orange">External</span></td><td><span class="badge badge-red">🚨 เกินกำหนด</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA003')">📱 QR</button></td><td></td><td><button class="btn btn-danger btn-sm" onclick="sendAlert()">แจ้งเตือน</button></td></tr>
+          <tr><td><span class="inst-id">LA009</span></td><td>Altimeter Barometric</td><td>Kollsman B-1000</td><td><span class="badge badge-orange">Pressure</span></td><td>3 ม.ค. 68</td><td><strong style="color:var(--accent-red);">3 ก.ค. 68 🚨</strong></td><td>6 เดือน</td><td><span class="badge badge-orange">External</span></td><td><span class="badge badge-red">🚨 เกินกำหนด</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA009')">📱 QR</button></td><td></td><td><button class="btn btn-danger btn-sm" onclick="sendAlert()">แจ้งเตือน</button></td></tr>
+          <tr><td><span class="inst-id">LA012</span></td><td>Temperature Controller</td><td>Eurotherm 3216</td><td><span class="badge badge-red">Temperature</span></td><td>20 ม.ค. 68</td><td><strong style="color:var(--accent-yellow);">20 ก.ค. 68 ⚠</strong></td><td>6 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-yellow">⏰ ใกล้ครบ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA012')">📱 QR</button></td><td></td><td><button class="btn btn-outline btn-sm">นัดหมาย</button></td></tr>
+          <tr><td><span class="inst-id">LA022</span></td><td>Pressure Gauge 100PSI</td><td>Ashcroft 1279</td><td><span class="badge badge-orange">Pressure</span></td><td>15 ก.ค. 68</td><td>15 ก.ค. 69</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-green">✓ ใช้งานได้</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA022')">📱 QR</button></td><td></td><td><button class="btn btn-outline btn-sm" onclick="editInstrument('LA022')">✏️ แก้ไข</button></td></tr>
+          <tr><td><span class="inst-id">LA047</span></td><td>Thermocouple Type K</td><td>Omega KMQSS-125</td><td><span class="badge badge-red">Temperature</span></td><td>15 ก.ค. 68</td><td>15 ม.ค. 69</td><td>6 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-blue">● กำลังสอบ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA047')">📱 QR</button></td><td></td><td><button class="btn btn-primary btn-sm">บันทึก</button></td></tr>
+          <tr><td><span class="inst-id">LA055</span></td><td>Tachometer Digital</td><td>Extech RPM10</td><td><span class="badge badge-blue">Rotation</span></td><td>15 ก.ค. 67</td><td>15 ก.ค. 68</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-grey">รอดำเนินการ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA055')">📱 QR</button></td><td></td><td><button class="btn btn-outline btn-sm">เริ่ม</button></td></tr>
+          <tr><td><span class="inst-id">LA067</span></td><td>Oscilloscope 200MHz</td><td>Rigol DS1202Z</td><td><span class="badge badge-blue">Electrical</span></td><td>19 ม.ค. 68</td><td><strong style="color:var(--accent-yellow);">19 ก.ค. 68 ⚠</strong></td><td>6 เดือน</td><td><span class="badge badge-orange">External</span></td><td><span class="badge badge-yellow">⏰ ใกล้ครบ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA067')">📱 QR</button></td><td></td><td><button class="btn btn-outline btn-sm">นัดหมาย</button></td></tr>
+          <tr><td><span class="inst-id">LA078</span></td><td>Torque Wrench Set</td><td>Snap-on TECH3FR250</td><td><span class="badge badge-orange">Torque</span></td><td>15 ก.ค. 67</td><td>15 ก.ค. 68</td><td>12 เดือน</td><td><span class="badge badge-green">Internal</span></td><td><span class="badge badge-grey">รอดำเนินการ</span></td><td><button class="btn btn-outline btn-sm" onclick="showQR('LA078')">📱 QR</button></td><td></td><td><button class="btn btn-outline btn-sm">เริ่ม</button></td></tr>
         </tbody>
       </table>
     </div>
@@ -2155,6 +2164,15 @@
 
   <div style="margin-top:16px;">
     <div class="panel">
+      <div class="panel-header"><div class="panel-title">💾 พื้นที่จัดเก็บข้อมูล / Storage Usage</div></div>
+      <div class="panel-body">
+        <div id="storageGauge"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <div class="panel">
       <div class="panel-header"><div class="panel-title">🗄️ จัดการฐานข้อมูล</div></div>
       <div class="panel-body">
         <div id="settingsDbInfo" style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">กำลังโหลดข้อมูล...</div>
@@ -2730,6 +2748,8 @@
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.18 Drift Analysis (📊 วิเคราะห์แนวโน้ม)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.19 ส่งสอบเทียบภายนอก (🏢 External Cal)</a>
       <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.20 Import Reservation 2026 (📅)</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.21 แก้ไข/เปลี่ยนวัน/ยกเลิก CalRequest</a>
+      <a href="#ug-planner" style="color:var(--accent-cyan);padding-left:16px;font-size:11px;">3.22 ดูพื้นที่จัดเก็บ + Archive สิ้นปี</a>
       <a href="#ug-owner" style="color:var(--accent-cyan);">4. สำหรับ Owner</a>
       <a href="#ug-awm" style="color:var(--accent-cyan);">5. สำหรับ AWM (Aircraft Workshop Mechanic)</a>
       <a href="#ug-manager" style="color:var(--accent-cyan);">6. สำหรับ LA-B Manager</a>
@@ -2888,6 +2908,24 @@
         <li>กดปุ่ม <strong>"✅ ยืนยัน import"</strong> → CalRequest เข้าระบบทันที ดูได้ที่หน้า CalRequest และแผนสอบเทียบ</li>
       </ul>
       <p style="margin-top:6px;">ข้อมูลทะเบียนเครื่องมือ <strong>ไม่ถูกกระทบ</strong> — เพิ่มเฉพาะ CalRequest เท่านั้น สามารถ import ซ้ำได้ ระบบจะข้ามรายการที่เคย import แล้วอัตโนมัติ</p>
+      <div class="section-div">3.21 แก้ไข / เปลี่ยนวัน / ยกเลิก CalRequest</div>
+      <p>ที่ตาราง CalRequest แต่ละแถวจะมีปุ่มจัดการในคอลัมน์ <strong>"จัดการ"</strong> ด้านขวาสุด:</p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li><strong>📅 เปลี่ยนวัน</strong> — Modal: เลือกวันใหม่ + เหตุผล (คิวเต็ม/Owner ขอเลื่อน/AWM ไม่ว่าง/กำหนดผิด) บันทึกประวัติเปลี่ยนวันทุกครั้ง</li>
+        <li><strong>✏️ แก้ไข</strong> — Modal: เปลี่ยนเครื่องมือ/เหตุผล — แสดงเฉพาะสถานะ "รอ Owner ยอมรับ"</li>
+        <li><strong>❌ ยกเลิก</strong> — Modal: ระบุเหตุผล → สถานะเปลี่ยนเป็น "ยกเลิก" (ข้อมูลไม่ถูกลบ สืบค้นย้อนหลังได้)</li>
+      </ul>
+      <p style="margin-top:6px;">ปุ่มจะแสดง/ซ่อนตามสถานะ: ยิ่งเข้า workflow ลึก ยิ่งแก้ได้น้อยลง เพื่อป้องกันข้อมูลที่คนอื่นตอบรับไปแล้วถูกเปลี่ยนโดยไม่รู้ตัว</p>
+      <div class="section-div">3.22 ดูพื้นที่จัดเก็บ + Archive สิ้นปี (💾)</div>
+      <p>ไปที่ <strong>"ตั้งค่า" → "💾 พื้นที่จัดเก็บข้อมูล"</strong> จะเห็น gauge แสดง % พื้นที่ที่ใช้ไป พร้อมรายละเอียดว่าข้อมูลไหนกินพื้นที่มากสุด</p>
+      <p style="margin-top:6px;"><strong>SOP สิ้นปี:</strong></p>
+      <ul style="padding-left:20px;margin-top:6px;">
+        <li>กด "💾 สำรองทั้งระบบ" → เก็บไฟล์ backup ไว้ใน Share Drive</li>
+        <li>กด "📦 Archive ข้อมูลเก่า" → เลือก 12 เดือน → ลบ CalRequest + Audit Log เก่า</li>
+        <li>CalRequest ที่ยังค้าง (ยังไม่เสร็จ) จะไม่ถูกลบ</li>
+        <li>ทะเบียนเครื่องมือไม่ถูกลบเลย</li>
+      </ul>
+      <p style="margin-top:6px;color:var(--text-warning);">⚠ ระบบจะเตือนเมื่อพื้นที่เกิน 60% — ควร Archive ก่อนเกิน 80%</p>
     </div>
   </div>
 
@@ -3508,7 +3546,53 @@ function switchPage(id, idx){
   if(id==='today')      renderTodayPage();
   if(id==='alerts'){ runNotificationCheck(); renderAuditTrail(); }
   if(id==='report'){ renderHistorySummary(); renderHistoryTable(); refreshReportKpis(); renderHistoryAnalytics(); }
-  if(id==='settings')   { refreshSettingsDbInfo(); renderCompetencyMatrix(); renderSOPLibrary(); renderRiskMatrix(); }
+  if(id==='settings')   { refreshSettingsDbInfo(); renderCompetencyMatrix(); renderSOPLibrary(); renderRiskMatrix(); renderStorageGauge(); }
+
+// ════════════════════════════════════════════════════════════
+// STORAGE GAUGE — แสดงพื้นที่ localStorage ที่ใช้ไป
+// ════════════════════════════════════════════════════════════
+function renderStorageGauge(){
+  const el=document.getElementById('storageGauge'); if(!el) return;
+  let totalBytes=0;
+  const breakdown=[];
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(!key.startsWith('scalm')) continue;
+    const size=(localStorage.getItem(key)||'').length*2; // UTF-16
+    totalBytes+=size;
+    breakdown.push({key,size});
+  }
+  breakdown.sort((a,b)=>b.size-a.size);
+  const limitBytes=5*1024*1024; // 5MB
+  const pct=Math.min((totalBytes/limitBytes)*100, 100);
+  const pctStr=pct.toFixed(1);
+  const usedKB=(totalBytes/1024).toFixed(0);
+  const limitKB=(limitBytes/1024).toFixed(0);
+  const barColor=pct>=80?'var(--accent-red)':pct>=60?'var(--accent-orange)':'var(--accent-green)';
+  const warnMsg=pct>=80?'<div style="margin-top:8px;padding:8px 12px;background:var(--bg-danger);border-radius:8px;font-size:12px;color:var(--text-danger);">⚠ พื้นที่เหลือน้อย — ควรกด "📦 Archive ข้อมูลเก่า" เพื่อคืนพื้นที่</div>':pct>=60?'<div style="margin-top:8px;padding:8px 12px;background:var(--bg-warning);border-radius:8px;font-size:12px;color:var(--text-warning);">⚠ พื้นที่เริ่มน้อย — แนะนำ Archive ข้อมูลเก่ากว่า 12 เดือน</div>':'';
+
+  let breakdownHtml=breakdown.slice(0,6).map(b=>{
+    const keyLabel=b.key.replace('scalm','').replace(/([A-Z])/g,' $1').trim()||b.key;
+    const kb=(b.size/1024).toFixed(1);
+    const bPct=(b.size/totalBytes*100).toFixed(0);
+    return `<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:var(--text-secondary);"><span>${escHtml(keyLabel)}</span><span>${kb} KB (${bPct}%)</span></div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;">
+      <span style="font-size:24px;font-weight:700;color:var(--text-primary);">${pctStr}%</span>
+      <span style="font-size:13px;color:var(--text-secondary);">${usedKB} KB / ${limitKB} KB</span>
+    </div>
+    <div style="height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:8px;">
+      <div style="height:100%;width:${pctStr}%;background:${barColor};border-radius:6px;transition:width 0.5s;"></div>
+    </div>
+    ${warnMsg}
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:4px;">รายละเอียด:</div>
+      ${breakdownHtml}
+    </div>
+  `;
+}
   if(id==='calreq')     renderCalReqPage();
   if(id==='manual')     renderManualPage();
   if(id==='insthistory') renderInstrumentHistoryPage();
@@ -7915,7 +7999,7 @@ function refreshScalmSiteUrlStatus(){
 // สร้าง badge + ปุ่มสำหรับคอลัมน์ Workflow ในตารางเครื่องมือ ตามสถานะ workflowStatus ของแต่ละ record
 function workflowCellHtml(row){
   const wf=row.workflowStatus;
-  if(!wf) return `<button class="btn btn-outline btn-sm" onclick="sendCalibrationRequest('${escHtml(row.id||'')}')">📧 ส่งคำขอนัดหมาย</button>`;
+  if(!wf) return `<span class="badge badge-gray" style="font-size:10px;">— ยังไม่มีคำขอ</span>`;
   const map={
     'Waiting Owner Confirmation':{cls:'badge-yellow',label:'⏳ รอ Owner ยืนยัน'},
     'Owner Confirmed':{cls:'badge-blue',label:'✅ Owner ยืนยันแล้ว'},

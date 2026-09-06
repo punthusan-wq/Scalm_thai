@@ -2299,9 +2299,9 @@
     <div style="position:relative;" id="calReqActionDropdown">
       <button class="btn btn-primary" onclick="toggleCalReqDropdown()" style="font-size:13px;padding:8px 18px;">📋 สร้างคำขอ / ตรวจรับ / ส่งคืน ▾</button>
       <div id="calReqDropdownMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);min-width:300px;z-index:50;overflow:hidden;">
-        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqSuggestPanel'); closeCalReqDropdown();">
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToSuggestPanel(); closeCalReqDropdown();">
           <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📅 สร้างคำขอตามรอบ (Periodic)</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">งานที่ครบกำหนดตามรอบ — ติ๊กเลือกจากรายการแนะนำ</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">งานที่ครบกำหนดตามรอบ — ติ๊กเลือกจากรายการแนะนำด้านล่าง</div>
         </div>
         <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqCreatePanel'); closeCalReqDropdown();">
           <div style="font-size:13px;font-weight:500;color:var(--accent-orange);">🚨 สร้างคำขอ Urgent (นอกแผน)</div>
@@ -2340,11 +2340,7 @@
     </div>
   </div>
 
-  <!-- Panel ที่กำลังแสดง -->
-  <div id="calReqActiveLabel" style="display:none;margin-bottom:12px;padding:8px 14px;background:var(--bg-accent);border-radius:8px;font-size:12px;color:var(--text-accent);display:flex;align-items:center;justify-content:space-between;">
-    <span id="calReqActiveLabelText"></span>
-    <span style="cursor:pointer;font-size:11px;opacity:0.7;" onclick="showCalReqPanel('all')">✕ แสดงทั้งหมด</span>
-  </div>
+  <!-- Panels are accessed via modal popups from the dropdown buttons above -->
 
   <!-- LA-B Planner: แนะนำเครื่องมือที่ควรเปิด Calibration Request (จาก Priority Score เดิม) -->
   <div class="panel" id="calReqSuggestPanel" style="margin-bottom:16px;display:none;">
@@ -5340,50 +5336,101 @@ function closeCalReqViewDropdownOutside(e){
 // ════════════════════════════════════════════════════════════
 // PANEL SWITCHING — แสดงทีละ panel ตามที่เลือกจาก dropdown
 // ════════════════════════════════════════════════════════════
-const CALREQ_PANELS=['calReqSuggestPanel','calReqCreatePanel','calReqUrgentCreatePanel','calReqReceivingPanel','calReqPickupPanel','calReqCompletePanel','calReqReturnPanel','receivingDocsPanel','returnDocsPanel'];
+const CALREQ_PANELS=['calReqCreatePanel','calReqUrgentCreatePanel','calReqReceivingPanel','calReqPickupPanel','calReqCompletePanel','calReqReturnPanel','receivingDocsPanel','returnDocsPanel'];
 const CALREQ_PANEL_LABELS={
-  'calReqSuggestPanel':'📅 สร้างคำขอตามรอบ (Periodic)',
   'calReqCreatePanel':'🚨 สร้างคำขอ Urgent (นอกแผน)',
   'calReqReceivingPanel':'📦 สร้างใบตรวจรับเครื่องมือ',
   'calReqReturnPanel':'📤 สร้างใบส่งคืนเครื่องมือ',
-  'calReqPickupPanel':'🔧 เบิกเครื่องมือ/มอบหมาย AWM',
+  'calReqPickupPanel':'🔧 เบิกเครื่องมือ / มอบหมาย AWM',
   'calReqCompletePanel':'✅ บันทึกผลการสอบเทียบ',
   'receivingDocsPanel':'📦 ใบตรวจรับที่บันทึกไว้',
   'returnDocsPanel':'📤 ใบส่งคืนที่บันทึกไว้',
 };
 
+function scrollToSuggestPanel(){
+  const el=document.getElementById('calReqSuggestPanel');
+  if(el){
+    el.style.display='block';
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    el.style.animation='none'; el.offsetHeight;
+    el.style.animation='pulse-border 1.5s ease';
+  }
+}
+
 function showCalReqPanel(panelId){
-  const labelEl=document.getElementById('calReqActiveLabel');
-  const labelText=document.getElementById('calReqActiveLabelText');
   if(panelId==='all'){
-    // แสดงทั้งหมด
-    CALREQ_PANELS.forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.style.display='';
-    });
-    if(labelEl) labelEl.style.display='none';
+    // แสดงทั้งหมดแบบเดิม (ซ่อน/แสดง panels ในหน้า)
+    CALREQ_PANELS.forEach(id=>{const el=document.getElementById(id); if(el) el.style.display='';});
+    const lbl=document.getElementById('calReqActiveLabel'); if(lbl) lbl.style.display='none';
     renderCalReqPage();
     return;
   }
-  // ซ่อนทุก panel ก่อน
-  CALREQ_PANELS.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display='none';
+
+  // ── Render ข้อมูลล่าสุดก่อน ──
+  renderCalReqPage();
+
+  // ── ดึง panel content แล้วแสดงใน modal ──
+  const panel=document.getElementById(panelId);
+  if(!panel){ showToast('critical','ไม่พบ panel'); return; }
+
+  // ตรวจสอบว่ามีข้อมูลหรือไม่
+  const tbody=panel.querySelector('tbody');
+  const hasData=tbody ? tbody.querySelectorAll('tr').length > 0 && !tbody.innerHTML.includes('ไม่มีรายการ') : panel.innerHTML.trim().length > 50;
+
+  // สร้าง modal
+  const existing=document.getElementById('calReqActionModal');
+  if(existing) existing.remove();
+
+  const label=CALREQ_PANEL_LABELS[panelId]||panelId;
+  const modal=document.createElement('div');
+  modal.className='modal-overlay show';
+  modal.id='calReqActionModal';
+  modal.style.cssText='display:flex;align-items:flex-start;justify-content:center;padding:20px 10px;overflow-y:auto;';
+
+  // Clone panel content
+  const panelClone=panel.cloneNode(true);
+  panelClone.style.display='block';
+  panelClone.style.margin='0';
+  // Make all inner panels visible
+  panelClone.querySelectorAll('[style*="display:none"]').forEach(el=>{
+    if(!el.id || !el.id.includes('fail')) el.style.display='block';
   });
-  // แสดง panel ที่เลือก
-  const target=document.getElementById(panelId);
-  if(target){
-    target.style.display='block';
-    target.scrollIntoView({behavior:'smooth', block:'start'});
-    target.style.animation='none';
-    target.offsetHeight;
-    target.style.animation='pulse-border 1.5s ease';
+
+  // Rewire onclick handlers ให้ชี้ไปที่ element จริงแล้วปิด modal
+  const rewireButtons=panelClone.querySelectorAll('button[onclick]');
+  rewireButtons.forEach(btn=>{
+    const origOnclick=btn.getAttribute('onclick');
+    if(origOnclick && !origOnclick.includes('closeCalReqModal')){
+      btn.setAttribute('onclick', origOnclick + '; setTimeout(()=>{closeCalReqModal(); renderCalReqPage();}, 300);');
+    }
+  });
+
+  const emptyMsg=!hasData ? `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">📭 ไม่มีรายการรอดำเนินการในขั้นตอนนี้</div>` : '';
+
+  modal.innerHTML=`<div style="background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,0.4);max-width:900px;width:100%;max-height:90vh;overflow-y:auto;">
+    <div style="position:sticky;top:0;background:var(--bg-panel);padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;z-index:2;border-radius:14px 14px 0 0;">
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">${label}</div>
+      <span style="cursor:pointer;font-size:18px;color:var(--text-muted);padding:4px 8px;" onclick="closeCalReqModal()">✕</span>
+    </div>
+    <div style="padding:16px 20px;" id="calReqModalBody">${emptyMsg}</div>
+  </div>`;
+
+  document.body.appendChild(modal);
+
+  if(hasData){
+    document.getElementById('calReqModalBody').innerHTML='';
+    document.getElementById('calReqModalBody').appendChild(panelClone);
   }
-  // แสดง label
-  if(labelEl && labelText){
-    labelText.textContent=CALREQ_PANEL_LABELS[panelId]||panelId;
-    labelEl.style.display='flex';
-  }
+
+  // ปิด modal เมื่อคลิกนอก
+  modal.addEventListener('click', e=>{
+    if(e.target===modal) closeCalReqModal();
+  });
+}
+
+function closeCalReqModal(){
+  const m=document.getElementById('calReqActionModal');
+  if(m) m.remove();
   renderCalReqPage();
 }
 

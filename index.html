@@ -2289,33 +2289,61 @@
 
 <!-- ===== BOOK QUEUE (Owner self-service) ===== -->
 <div class="page" id="page-calreq">
-  <div class="flex-row" style="margin-bottom:16px;">
+  <div class="flex-row" style="margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div>
       <h2 style="font-size:16px;font-weight:800;">📄 คำขอสอบเทียบ/Calibration Request</h2>
       <p style="font-size:11px;color:var(--text-secondary);margin-top:4px;" id="calReqSubtitle">ใบขอสอบเทียบ — ติดตามสถานะการนัดหมายสอบเทียบ</p>
     </div>
     <div class="spacer"></div>
+    <!-- ปุ่มดำเนินการ -->
     <div style="position:relative;" id="calReqActionDropdown">
       <button class="btn btn-primary" onclick="toggleCalReqDropdown()" style="font-size:13px;padding:8px 18px;">📋 สร้างคำขอ / ตรวจรับ / ส่งคืน ▾</button>
       <div id="calReqDropdownMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);min-width:300px;z-index:50;overflow:hidden;">
-        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('calReqSuggestPanel'); closeCalReqDropdown();">
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqSuggestPanel'); closeCalReqDropdown();">
           <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📅 สร้างคำขอตามรอบ (Periodic)</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">งานที่ครบกำหนดตามรอบ — ติ๊กเลือกจากรายการแนะนำ</div>
         </div>
-        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('calReqCreatePanel'); closeCalReqDropdown();">
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqCreatePanel'); closeCalReqDropdown();">
           <div style="font-size:13px;font-weight:500;color:var(--accent-orange);">🚨 สร้างคำขอ Urgent (นอกแผน)</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">เครื่องมือตก/หลังซ่อม/เครื่องใหม่/ลูกค้าขอพิเศษ</div>
         </div>
-        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('receivingDocPanel'); closeCalReqDropdown();">
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqReceivingPanel'); closeCalReqDropdown();">
           <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📦 สร้างใบตรวจรับเครื่องมือ</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">บันทึกการรับเครื่องมือเข้าห้อง Lab</div>
         </div>
-        <div style="padding:10px 14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="scrollToPanel('returnDocPanel'); closeCalReqDropdown();">
+        <div style="padding:10px 14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqReturnPanel'); closeCalReqDropdown();">
           <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📤 สร้างใบส่งคืนเครื่องมือ</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">บันทึกการส่งคืนเครื่องมือให้ Owner</div>
         </div>
       </div>
     </div>
+    <!-- ปุ่มดูรายการ -->
+    <div style="position:relative;" id="calReqViewDropdown">
+      <button class="btn btn-outline" onclick="toggleCalReqViewDropdown()" style="font-size:13px;padding:8px 18px;">🗂 ดูรายการที่บันทึก ▾</button>
+      <div id="calReqViewMenu" style="display:none;position:absolute;right:0;top:100%;margin-top:6px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.3);min-width:280px;z-index:50;overflow:hidden;">
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqPickupPanel'); closeCalReqViewDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">🔧 เบิกเครื่องมือ/มอบหมาย AWM</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('calReqCompletePanel'); closeCalReqViewDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">✅ บันทึกผลการสอบเทียบ</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('receivingDocsPanel'); closeCalReqViewDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📦 ใบตรวจรับที่บันทึกไว้</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('returnDocsPanel'); closeCalReqViewDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);">📤 ใบส่งคืนที่บันทึกไว้</div>
+        </div>
+        <div style="padding:10px 14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''" onclick="showCalReqPanel('all'); closeCalReqViewDropdown();">
+          <div style="font-size:13px;font-weight:500;color:var(--text-accent);">📋 แสดงทั้งหมด</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel ที่กำลังแสดง -->
+  <div id="calReqActiveLabel" style="display:none;margin-bottom:12px;padding:8px 14px;background:var(--bg-accent);border-radius:8px;font-size:12px;color:var(--text-accent);display:flex;align-items:center;justify-content:space-between;">
+    <span id="calReqActiveLabelText"></span>
+    <span style="cursor:pointer;font-size:11px;opacity:0.7;" onclick="showCalReqPanel('all')">✕ แสดงทั้งหมด</span>
   </div>
 
   <!-- LA-B Planner: แนะนำเครื่องมือที่ควรเปิด Calibration Request (จาก Priority Score เดิม) -->
@@ -5273,6 +5301,7 @@ function prefillCalRequestForm(instrumentId){
 function toggleCalReqDropdown(){
   const menu=document.getElementById('calReqDropdownMenu');
   if(!menu) return;
+  closeCalReqViewDropdown();
   menu.style.display=menu.style.display==='none'?'block':'none';
   if(menu.style.display==='block'){
     document.addEventListener('click', closeCalReqDropdownOutside, {once:true, capture:true});
@@ -5287,15 +5316,79 @@ function closeCalReqDropdownOutside(e){
   if(dd && !dd.contains(e.target)) closeCalReqDropdown();
   else if(dd) document.addEventListener('click', closeCalReqDropdownOutside, {once:true, capture:true});
 }
-function scrollToPanel(panelId){
-  const el=document.getElementById(panelId);
-  if(el){
-    el.style.display='block';
-    el.scrollIntoView({behavior:'smooth', block:'start'});
-    el.style.animation='none';
-    el.offsetHeight;
-    el.style.animation='pulse-border 1.5s ease';
+
+// View dropdown
+function toggleCalReqViewDropdown(){
+  const menu=document.getElementById('calReqViewMenu');
+  if(!menu) return;
+  closeCalReqDropdown();
+  menu.style.display=menu.style.display==='none'?'block':'none';
+  if(menu.style.display==='block'){
+    document.addEventListener('click', closeCalReqViewDropdownOutside, {once:true, capture:true});
   }
+}
+function closeCalReqViewDropdown(){
+  const menu=document.getElementById('calReqViewMenu');
+  if(menu) menu.style.display='none';
+}
+function closeCalReqViewDropdownOutside(e){
+  const dd=document.getElementById('calReqViewDropdown');
+  if(dd && !dd.contains(e.target)) closeCalReqViewDropdown();
+  else if(dd) document.addEventListener('click', closeCalReqViewDropdownOutside, {once:true, capture:true});
+}
+
+// ════════════════════════════════════════════════════════════
+// PANEL SWITCHING — แสดงทีละ panel ตามที่เลือกจาก dropdown
+// ════════════════════════════════════════════════════════════
+const CALREQ_PANELS=['calReqSuggestPanel','calReqCreatePanel','calReqUrgentCreatePanel','calReqReceivingPanel','calReqPickupPanel','calReqCompletePanel','calReqReturnPanel','receivingDocsPanel','returnDocsPanel'];
+const CALREQ_PANEL_LABELS={
+  'calReqSuggestPanel':'📅 สร้างคำขอตามรอบ (Periodic)',
+  'calReqCreatePanel':'🚨 สร้างคำขอ Urgent (นอกแผน)',
+  'calReqReceivingPanel':'📦 สร้างใบตรวจรับเครื่องมือ',
+  'calReqReturnPanel':'📤 สร้างใบส่งคืนเครื่องมือ',
+  'calReqPickupPanel':'🔧 เบิกเครื่องมือ/มอบหมาย AWM',
+  'calReqCompletePanel':'✅ บันทึกผลการสอบเทียบ',
+  'receivingDocsPanel':'📦 ใบตรวจรับที่บันทึกไว้',
+  'returnDocsPanel':'📤 ใบส่งคืนที่บันทึกไว้',
+};
+
+function showCalReqPanel(panelId){
+  const labelEl=document.getElementById('calReqActiveLabel');
+  const labelText=document.getElementById('calReqActiveLabelText');
+  if(panelId==='all'){
+    // แสดงทั้งหมด
+    CALREQ_PANELS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='';
+    });
+    if(labelEl) labelEl.style.display='none';
+    renderCalReqPage();
+    return;
+  }
+  // ซ่อนทุก panel ก่อน
+  CALREQ_PANELS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  // แสดง panel ที่เลือก
+  const target=document.getElementById(panelId);
+  if(target){
+    target.style.display='block';
+    target.scrollIntoView({behavior:'smooth', block:'start'});
+    target.style.animation='none';
+    target.offsetHeight;
+    target.style.animation='pulse-border 1.5s ease';
+  }
+  // แสดง label
+  if(labelEl && labelText){
+    labelText.textContent=CALREQ_PANEL_LABELS[panelId]||panelId;
+    labelEl.style.display='flex';
+  }
+  renderCalReqPage();
+}
+
+function scrollToPanel(panelId){
+  showCalReqPanel(panelId);
 }
 
 function submitCalRequest(){

@@ -2512,7 +2512,7 @@
     <div class="panel-header"><div class="panel-title">📋 รายการ Calibration Request ทั้งหมด</div></div>
     <div class="panel-body" style="padding:0;">
       <table class="cal-table">
-        <thead><tr><th>EQ No.</th><th>ชื่อเครื่องมือ</th><th>วันนัด Cal.</th><th>วันนัดส่ง (Owner)</th><th>วันที่จะ Cal. (AWM)</th><th>ยืนยันวัน Cal. (LA-B Planner)</th><th>ผู้สอบเทียบ / วันที่เริ่ม Cal.</th><th>Adj. Perm.</th><th>Reason for Cal.</th><th>สถานะ</th></tr></thead>
+        <thead><tr><th>EQ No.</th><th>ชื่อเครื่องมือ</th><th>วันนัด Cal.</th><th>วันนัดส่ง (Owner)</th><th>วันที่จะ Cal. (AWM)</th><th>ยืนยันวัน Cal. (LA-B Planner)</th><th>ผู้สอบเทียบ / วันที่เริ่ม Cal.</th><th>Adj. Perm.</th><th>Reason for Cal.</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
         <tbody id="calReqTbody"><tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:20px;">ยังไม่มีใบ Calibration Request</td></tr></tbody>
       </table>
     </div>
@@ -5007,7 +5007,7 @@ function toggleFailReasonInputs(id, resultVal){
   }
 }
 const CALREQ_STATUS_LABEL={
-  pending_planner_ack:'🆘 รอ LA-B Planner รับทราบ (ด่วน)/Awaiting Acknowledgement (Urgent)', pending_owner:'⏰ รอ Owner ยอมรับ/Awaiting Owner Acceptance', pending_tech:'⏰ รอ AWM ตอบรับ/Awaiting AWM Response', pending_admin_confirm:'📝 รอ LA-B Planner ยืนยัน/Awaiting Final Confirmation', confirmed:'✅ ยืนยันแล้ว/Confirmed',
+  pending_planner_ack:'🆘 รอ LA-B Planner รับทราบ (ด่วน)/Awaiting Acknowledgement (Urgent)', pending_owner:'⏰ รอ Owner ยอมรับ/Awaiting Owner Acceptance', pending_tech:'⏰ รอ AWM ตอบรับ/Awaiting AWM Response', pending_admin_confirm:'📝 รอ LA-B Planner ยืนยัน/Awaiting Final Confirmation', confirmed:'✅ ยืนยันแล้ว/Confirmed', cancelled:'❌ ยกเลิกแล้ว/Cancelled',
 };
 // ── ป้ายเตือนกรณีเร่งด่วน — ให้ทุกบทบาทเห็นตรงกันทุกจุดที่แสดงรายการ Calibration Request ──
 function urgentBadge(r){
@@ -5016,8 +5016,20 @@ function urgentBadge(r){
 function renderCalReqTable(){
   const tbody=document.getElementById('calReqTbody'); if(!tbody) return;
   const list=getCalRequests().slice().sort((a,b)=>b.id.localeCompare(a.id));
-  if(list.length===0){ tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:20px;">ยังไม่มีใบ Calibration Request</td></tr>`; return; }
-  tbody.innerHTML=list.map(r=>`<tr${r.initiatedByOwner?' class="urgent-row"':''}>
+  if(list.length===0){ tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px;">ยังไม่มีใบ Calibration Request</td></tr>`; return; }
+  const isPlanner=currentUser&&currentUser.role==='admin';
+  tbody.innerHTML=list.map(r=>{
+    const isCancelled=r.status==='cancelled';
+    const isCompleted=!!r.calFinishDate;
+    const canEdit=isPlanner && !isCancelled && !isCompleted;
+    const canReschedule=isPlanner && !isCancelled && !isCompleted;
+    const canCancel=isPlanner && !isCancelled && !isCompleted;
+    const actionBtns=isCancelled?`<span class="badge badge-gray">ยกเลิกแล้ว</span>`:isCompleted?`<span class="badge badge-green">เสร็จสิ้น</span>`:isPlanner?`<div style="display:flex;gap:4px;flex-wrap:wrap;">
+      ${canReschedule?`<button class="btn btn-outline btn-sm" onclick="openRescheduleModal('${escHtml(r.id)}')">📅</button>`:''}
+      ${canEdit&&r.status==='pending_owner'?`<button class="btn btn-outline btn-sm" onclick="openEditCalReqModal('${escHtml(r.id)}')">✏️</button>`:''}
+      ${canCancel?`<button class="btn btn-outline btn-sm" style="color:var(--text-danger);" onclick="openCancelCalReqModal('${escHtml(r.id)}')">❌</button>`:''}
+    </div>`:'';
+    return `<tr${r.initiatedByOwner?' class="urgent-row"':''}${isCancelled?' style="opacity:0.4;text-decoration:line-through;"':''}>
     <td><span class="inst-id">${escHtml(r.instrumentId)}</span> ${urgentBadge(r)}</td>
     <td>${escHtml(r.instrumentName||'–')}</td>
     <td>${escHtml(r.proposedDate)}</td>
@@ -5027,8 +5039,190 @@ function renderCalReqTable(){
     <td>${r.pickedUpBy?`${escHtml(r.pickedUpBy)}<br><span style="font-size:10px;color:var(--text-muted);">${escHtml(r.pickupDate)}</span>`:'–'}</td>
     <td>${r.adjustmentPermission==='Yes'?'<span class="badge badge-green">Yes</span>':r.adjustmentPermission==='No'?'<span class="badge badge-red">No</span>':'–'}</td>
     <td>${formatReason(r)}</td>
-    <td>${CALREQ_STATUS_LABEL[r.status]||escHtml(r.status)}${r.slaBreached?` <span class="badge badge-red" title="${escHtml(r.status==='pending_owner'?'ยังไม่มี Owner ยอมรับ — ประสานงานกับแผนก/เจ้าของเครื่องมือโดยตรง':r.status==='pending_tech'?'รอ AWM ตอบรับ — ประสานงานกับทีม AWM':'รอคุณยืนยันวัน Cal. เอง')}">⚠ SLA</span>`:''}</td>
-  </tr>`).join('');
+    <td>${CALREQ_STATUS_LABEL[r.status]||escHtml(r.status)}${r.slaBreached?` <span class="badge badge-red">⚠ SLA</span>`:''}</td>
+    <td>${actionBtns}</td>
+  </tr>`;}).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// CALREQUEST: เปลี่ยนวัน / แก้ไข / ยกเลิก
+// ════════════════════════════════════════════════════════════
+function openRescheduleModal(reqId){
+  const list=getCalRequests();
+  const r=list.find(x=>x.id===reqId);
+  if(!r){ showToast('critical','ไม่พบคำขอ'); return; }
+  const m=document.createElement('div');
+  m.className='modal-overlay show'; m.id='reschedModal';
+  m.innerHTML=`<div class="modal-card" style="max-width:440px;"><div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;">📅 เปลี่ยนวันนัด Cal.</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">${escHtml(r.instrumentId)} — ${escHtml(r.instrumentName||'')}</div>
+    <div style="margin-bottom:10px;font-size:13px;">วันนัดเดิม: <strong>${escHtml(r.proposedDate)}</strong></div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">วันนัดใหม่ *</label>
+      <input class="auth-input" type="date" id="resched_newDate" min="${localIsoDate(new Date())}" style="width:100%;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">เหตุผลที่เปลี่ยน *</label>
+      <select class="auth-input" id="resched_reason" style="width:100%;">
+        <option value="">— เลือก —</option>
+        <option value="คิวเต็ม">📅 คิวเต็ม</option>
+        <option value="Owner ขอเลื่อน">📤 Owner ขอเลื่อน</option>
+        <option value="AWM ไม่ว่าง">🔧 AWM ไม่ว่าง</option>
+        <option value="เครื่องมือยังใช้งานอยู่">⚙️ เครื่องมือยังใช้งานอยู่</option>
+        <option value="กำหนดวันผิด">❌ กำหนดวันผิด</option>
+        <option value="other">📝 อื่นๆ</option>
+      </select>
+      <input class="auth-input" id="resched_reasonOther" placeholder="ระบุเหตุผล" style="display:none;margin-top:6px;width:100%;">
+    </div>
+    <div id="resched_error" class="auth-error"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="confirmReschedule('${escHtml(reqId)}')">💾 บันทึก</button>
+      <button class="btn btn-outline" onclick="document.getElementById('reschedModal').remove()">ยกเลิก</button>
+    </div>
+  </div></div>`;
+  document.body.appendChild(m);
+  document.getElementById('resched_reason').addEventListener('change',function(){
+    document.getElementById('resched_reasonOther').style.display=this.value==='other'?'block':'none';
+  });
+}
+
+function confirmReschedule(reqId){
+  const newDate=document.getElementById('resched_newDate').value;
+  const reasonSel=document.getElementById('resched_reason').value;
+  const reasonOther=document.getElementById('resched_reasonOther').value.trim();
+  const reason=reasonSel==='other'?reasonOther:reasonSel;
+  const errEl=document.getElementById('resched_error');
+  if(!newDate){ errEl.textContent='กรุณาเลือกวันนัดใหม่'; errEl.classList.add('show'); return; }
+  if(!reason){ errEl.textContent='กรุณาระบุเหตุผล'; errEl.classList.add('show'); return; }
+  const list=getCalRequests();
+  const idx=list.findIndex(x=>x.id===reqId);
+  if(idx<0) return;
+  const oldDate=list[idx].proposedDate;
+  list[idx].proposedDate=thaiDateFromInput(newDate);
+  if(!list[idx].rescheduleHistory) list[idx].rescheduleHistory=[];
+  list[idx].rescheduleHistory.push({from:oldDate, to:list[idx].proposedDate, reason, by:currentUser?(currentUser.displayName||currentUser.username):'', at:new Date().toISOString()});
+  saveCalRequests(list);
+  logAudit(list[idx].instrumentId, `เปลี่ยนวันนัด Cal.: "${oldDate}" → "${list[idx].proposedDate}" เหตุผล: ${reason}`);
+  document.getElementById('reschedModal').remove();
+  renderCalReqPage(); renderCalReqTable();
+  showToast('save',`เปลี่ยนวันนัด Cal. เป็น ${list[idx].proposedDate} เรียบร้อย`);
+}
+
+function openEditCalReqModal(reqId){
+  const list=getCalRequests();
+  const r=list.find(x=>x.id===reqId);
+  if(!r){ showToast('critical','ไม่พบคำขอ'); return; }
+  if(r.status!=='pending_owner'){ showToast('critical','แก้ไขได้เฉพาะคำขอที่ยังรอ Owner ยอมรับเท่านั้น'); return; }
+  const db=getDB();
+  const instOpts=db.map(i=>`<option value="${escHtml(i.id)}" ${i.id===r.instrumentId?'selected':''}>${escHtml(i.id)} — ${escHtml(i.name||'')}</option>`).join('');
+  const m=document.createElement('div');
+  m.className='modal-overlay show'; m.id='editCalReqModal';
+  m.innerHTML=`<div class="modal-card" style="max-width:440px;"><div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;">✏️ แก้ไขคำขอ — ${escHtml(r.instrumentId)}</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">เครื่องมือ</label>
+      <select class="auth-input" id="editCR_inst" style="width:100%;"><option value="">— เลือก —</option>${instOpts}</select>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Reason for Calibration</label>
+      <select class="auth-input" id="editCR_reason" style="width:100%;">
+        <option value="PC" ${r.remark==='PC'?'selected':''}>📅 ครบกำหนดสอบเทียบ</option>
+        <option value="AR" ${r.remark==='AR'?'selected':''}>🔧 หลังซ่อมแซม</option>
+        <option value="SI" ${r.remark==='SI'?'selected':''}>⚠️ ผลการวัดผิดปกติ</option>
+        <option value="DI" ${r.remark==='DI'?'selected':''}>💥 เครื่องมือตก/กระแทก</option>
+        <option value="NI" ${r.remark==='NI'?'selected':''}>🆕 เครื่องมือใหม่</option>
+        <option value="CV" ${r.remark==='CV'?'selected':''}>📋 คำขอพิเศษ</option>
+        <option value="OT" ${r.remark==='OT'?'selected':''}>📝 อื่นๆ</option>
+      </select>
+    </div>
+    <div id="editCR_error" class="auth-error"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="confirmEditCalReq('${escHtml(reqId)}')">💾 บันทึก</button>
+      <button class="btn btn-outline" onclick="document.getElementById('editCalReqModal').remove()">ยกเลิก</button>
+    </div>
+  </div></div>`;
+  document.body.appendChild(m);
+}
+
+function confirmEditCalReq(reqId){
+  const newInst=document.getElementById('editCR_inst').value;
+  const newReason=document.getElementById('editCR_reason').value;
+  if(!newInst){ document.getElementById('editCR_error').textContent='กรุณาเลือกเครื่องมือ'; document.getElementById('editCR_error').classList.add('show'); return; }
+  const list=getCalRequests();
+  const idx=list.findIndex(x=>x.id===reqId);
+  if(idx<0) return;
+  const db=getDB();
+  const inst=db.find(i=>i.id===newInst);
+  const changes=[];
+  if(list[idx].instrumentId!==newInst) changes.push(`เครื่องมือ: ${list[idx].instrumentId} → ${newInst}`);
+  if(list[idx].remark!==newReason) changes.push(`เหตุผล: ${list[idx].remark} → ${newReason}`);
+  if(changes.length===0){ showToast('save','ไม่มีการเปลี่ยนแปลง'); document.getElementById('editCalReqModal').remove(); return; }
+  list[idx].instrumentId=newInst;
+  list[idx].instrumentName=inst?inst.name||'':'';
+  list[idx].instrumentType=inst?inst.type||'':'';
+  list[idx].remark=newReason;
+  saveCalRequests(list);
+  logAudit(newInst, `แก้ไข CalRequest: ${changes.join(', ')}`);
+  document.getElementById('editCalReqModal').remove();
+  renderCalReqPage(); renderCalReqTable();
+  showToast('save','แก้ไขคำขอเรียบร้อย');
+}
+
+function openCancelCalReqModal(reqId){
+  const list=getCalRequests();
+  const r=list.find(x=>x.id===reqId);
+  if(!r){ showToast('critical','ไม่พบคำขอ'); return; }
+  const m=document.createElement('div');
+  m.className='modal-overlay show'; m.id='cancelCalReqModal';
+  m.innerHTML=`<div class="modal-card" style="max-width:440px;"><div style="padding:20px;">
+    <div style="font-size:15px;font-weight:700;color:var(--text-danger);margin-bottom:4px;">❌ ยกเลิกคำขอสอบเทียบ</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">${escHtml(r.instrumentId)} — ${escHtml(r.instrumentName||'')} · วันนัด: ${escHtml(r.proposedDate)}</div>
+    <div style="padding:10px;background:var(--bg-danger);border-radius:8px;font-size:12px;color:var(--text-danger);margin-bottom:12px;">
+      ⚠ การยกเลิกจะเปลี่ยนสถานะเป็น "ยกเลิก" — ข้อมูลไม่ถูกลบ สืบค้นย้อนหลังได้<br>
+      ถ้า Owner/AWM ตอบรับไปแล้ว ระบบจะแจ้งให้ทราบ
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">เหตุผลที่ยกเลิก *</label>
+      <select class="auth-input" id="cancelCR_reason" style="width:100%;">
+        <option value="">— เลือก —</option>
+        <option value="สร้างซ้ำ/ผิดตัว">🔄 สร้างซ้ำ / เลือกเครื่องมือผิดตัว</option>
+        <option value="เครื่องมือชำรุด/ปลดระวาง">🔧 เครื่องมือชำรุด / ปลดระวาง</option>
+        <option value="Owner ยกเลิกความต้องการ">📤 Owner ยกเลิกความต้องการ</option>
+        <option value="เปลี่ยนแผนสอบเทียบ">📅 เปลี่ยนแผนสอบเทียบ</option>
+        <option value="other">📝 อื่นๆ</option>
+      </select>
+      <input class="auth-input" id="cancelCR_reasonOther" placeholder="ระบุเหตุผล" style="display:none;margin-top:6px;width:100%;">
+    </div>
+    <div id="cancelCR_error" class="auth-error"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-danger" style="flex:1;" onclick="confirmCancelCalReq('${escHtml(reqId)}')">❌ ยืนยันยกเลิก</button>
+      <button class="btn btn-outline" onclick="document.getElementById('cancelCalReqModal').remove()">ไม่ยกเลิก</button>
+    </div>
+  </div></div>`;
+  document.body.appendChild(m);
+  document.getElementById('cancelCR_reason').addEventListener('change',function(){
+    document.getElementById('cancelCR_reasonOther').style.display=this.value==='other'?'block':'none';
+  });
+}
+
+function confirmCancelCalReq(reqId){
+  const reasonSel=document.getElementById('cancelCR_reason').value;
+  const reasonOther=document.getElementById('cancelCR_reasonOther').value.trim();
+  const reason=reasonSel==='other'?reasonOther:reasonSel;
+  if(!reason){ document.getElementById('cancelCR_error').textContent='กรุณาระบุเหตุผล'; document.getElementById('cancelCR_error').classList.add('show'); return; }
+  const list=getCalRequests();
+  const idx=list.findIndex(x=>x.id===reqId);
+  if(idx<0) return;
+  const oldStatus=list[idx].status;
+  list[idx].status='cancelled';
+  list[idx].cancelledAt=new Date().toISOString();
+  list[idx].cancelledBy=currentUser?(currentUser.displayName||currentUser.username):'';
+  list[idx].cancelReason=reason;
+  saveCalRequests(list);
+  logAudit(list[idx].instrumentId, `ยกเลิก CalRequest: สถานะเดิม "${CALREQ_STATUS_LABEL[oldStatus]||oldStatus}" เหตุผล: ${reason}`);
+  document.getElementById('cancelCalReqModal').remove();
+  renderCalReqPage(); renderCalReqTable(); refreshDashboard();
+  showToast('save',`ยกเลิกคำขอ ${list[idx].instrumentId} เรียบร้อย`);
 }
 // ── Auto-suggest: แนะนำเครื่องมือที่ควรเปิด Calibration Request ใหม่ (ใช้ Priority Score เดิมจากหน้าแผนวันนี้) ──
 // สร้างข้อความเหตุผลอ่านง่าย อธิบายที่มาของคะแนนความสำคัญ — ใช้ประกอบการตัดสินใจ/ตอบคำถามผู้เกี่ยวข้อง

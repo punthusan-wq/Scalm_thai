@@ -599,7 +599,7 @@
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   .nav-tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 0 24px; gap: 4px; overflow-x: auto; overflow-y: visible; -webkit-overflow-scrolling: touch; scrollbar-width: thin; position: sticky; top: 0; z-index: 100; }
-  .nav-dropdown { position:absolute; top:100%; left:0; min-width:220px; background:var(--bg-panel); border:1px solid var(--border); border-radius:0 0 10px 10px; box-shadow:0 8px 24px rgba(0,0,0,0.3); z-index:200; overflow:hidden; }
+  .nav-dropdown { position:fixed; min-width:220px; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:999; overflow:hidden; }
   .nav-dd-item { padding:10px 16px; font-size:12px; cursor:pointer; transition:background 0.15s; color:var(--text-primary); border-bottom:1px solid var(--border); }
   .nav-dd-item:last-child { border:none; }
   .nav-dd-item:hover { background:var(--bg-hover); }
@@ -5854,10 +5854,15 @@ const CALREQ_PANEL_LABELS={
 function toggleNavDropdown(id){
   const dd=document.getElementById(id); if(!dd) return;
   closeAllNavDD(id);
-  dd.style.display=dd.style.display==='none'?'block':'none';
-  if(dd.style.display==='block'){
-    setTimeout(()=>document.addEventListener('click', closeAllNavDDHandler, {once:true}), 10);
-  }
+  const isOpen=dd.style.display==='block';
+  if(isOpen){ dd.style.display='none'; return; }
+  // Position fixed dropdown below the parent tab
+  const parent=dd.parentElement;
+  const rect=parent.getBoundingClientRect();
+  dd.style.top=(rect.bottom+2)+'px';
+  dd.style.left=Math.min(rect.left, window.innerWidth-230)+'px';
+  dd.style.display='block';
+  setTimeout(()=>document.addEventListener('click', closeAllNavDDHandler, {once:true}), 10);
 }
 function closeAllNavDD(exceptId){
   document.querySelectorAll('.nav-dropdown').forEach(el=>{

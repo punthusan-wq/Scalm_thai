@@ -1362,15 +1362,6 @@
     <div class="panel-body" id="workSourceSubBody"></div>
   </div>
 
-  <div class="panel" style="margin-top:16px;">
-    <div class="panel-header">
-      <div class="panel-title">📈 จำนวนการสอบเทียบต่อเดือน แยกตามประเภทเครื่องมือ (จากประวัติ<span id="monthlyCalYearLabel">ปี –</span>)</div>
-    </div>
-    <div class="panel-body" id="monthlyCalByType">
-      <div style="text-align:center;color:var(--text-muted);font-size:12px;">ยังไม่มีข้อมูลประวัติ — นำเข้าไฟล์ประวัติที่หน้า "รายงาน" ก่อน</div>
-    </div>
-  </div>
-
   <div class="grid-2" style="margin-top:16px;">
     <div class="panel">
       <div class="panel-header"><div class="panel-title">⏱ ระยะเวลาเฉลี่ยต่อรอบสอบเทียบ (Turnaround) แยกตามประเภท</div></div>
@@ -7749,13 +7740,11 @@ function renderAnalyticsPanels(db){
 const HISTORY_TYPE_COLORS={Torque:'#00b8d9',Pressure:'#f5a623',Force:'#7b4f9e',Weight:'#2e7d32',Dimension:'#c75b2a',Electrical:'#1976d2',Mass:'#b71c1c',Temperature:'#00897b'};
 function historyDate(r){ return r.completeDate||r.processDate||null; }
 function renderHistoryAnalytics(){
-  const monEl=document.getElementById('monthlyCalByType');
   const monElReport=document.getElementById('monthlyCalByTypeReport');
   const turnEl=document.getElementById('turnaroundChart');
   const hist=getHistoryDB().filter(h=>!h.cancelled);
   if(hist.length===0){
     const emptyMsg=`<div style="text-align:center;color:var(--text-muted);font-size:12px;">ยังไม่มีข้อมูลประวัติ — นำเข้าไฟล์ประวัติที่หน้า "รายงาน" ก่อน</div>`;
-    if(monEl) monEl.innerHTML=emptyMsg;
     if(monElReport) monElReport.innerHTML=emptyMsg;
     if(turnEl) turnEl.innerHTML=`<div style="text-align:center;color:var(--text-muted);font-size:12px;">ยังไม่มีข้อมูล</div>`;
     return;
@@ -7766,9 +7755,7 @@ function renderHistoryAnalytics(){
   const yearKeys=Object.keys(yearCounts);
   const targetYear = yearKeys.length ? yearKeys.reduce((a,b)=>yearCounts[a]>=yearCounts[b]?a:b) : String(new Date().getFullYear());
   const yearLabelText = `ปี ${parseInt(targetYear)+543}`; // แสดงเป็น พ.ศ. ให้ตรงกับธรรมเนียมเดิม
-  const yearLabelEl=document.getElementById('monthlyCalYearLabel');
   const yearLabelElReport=document.getElementById('monthlyCalYearLabelReport');
-  if(yearLabelEl) yearLabelEl.textContent = yearLabelText;
   if(yearLabelElReport) yearLabelElReport.textContent = yearLabelText;
   const months=[]; for(let m=1;m<=12;m++) months.push(`${targetYear}-${String(m).padStart(2,'0')}`);
   const allTypes=[...new Set(hist.map(h=>h.type))];
@@ -7779,7 +7766,7 @@ function renderHistoryAnalytics(){
     if(!monthly[key]) return; // นอกปีที่เลือกแสดง (ปีที่มีข้อมูลมากที่สุด) — ข้อมูลปีอื่นยังอยู่ครบใน getHistoryDB() ไม่ได้ถูกลบทิ้ง
     monthly[key][h.type]=(monthly[key][h.type]||0)+1;
   });
-  if(monEl || monElReport){
+  if(monElReport){
     const monthMax=Math.max(...months.map(m=>Object.values(monthly[m]).reduce((a,b)=>a+b,0)),1);
     const legend=allTypes.map(t=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary);margin-right:10px;"><span style="width:9px;height:9px;border-radius:2px;background:${HISTORY_TYPE_COLORS[t]||'#999'};display:inline-block;"></span>${escHtml(t)}</span>`).join('');
     const thaiM=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -7797,7 +7784,6 @@ function renderHistoryAnalytics(){
       </div>`;
     }).join('');
     const html=`<div style="margin-bottom:10px;">${legend}</div>${rows}`;
-    if(monEl) monEl.innerHTML=html;
     if(monElReport) monElReport.innerHTML=html;
   }
   // ระยะเวลาเฉลี่ย (queueDate → completeDate) แยกตามประเภท

@@ -1152,9 +1152,9 @@
   <div class="nav-tab" onclick="switchPage('import',5)" id="importTab">📥 นำเข้าข้อมูล/Import Data</div>
   <div class="nav-tab" id="navCalReq" onclick="switchPage('calreq',8)" style="display:none;">📄 คำขอสอบเทียบ/Calibration Request</div>
   <div class="nav-tab" id="navToday" onclick="switchPage('today',1)">📋 แผนการสอบเทียบ/Calibration Schedule</div>
-  <div class="nav-tab" onclick="switchPage('instruments',2)">🔧 เครื่องมือวัด/Instruments</div>
-  <div class="nav-tab" onclick="switchPage('alerts',3)">🔔 การแจ้งเตือน/Notifications <span class="alert-badge" id="alertBadgeCount">4</span></div>
-  <div class="nav-tab" onclick="switchPage('insthistory',10)">🗂 ประวัติเครื่องมือ/Instrument History</div>
+  <div class="nav-tab" id="navInstruments" onclick="switchPage('instruments',2)">🔧 เครื่องมือวัด/Instruments</div>
+  <div class="nav-tab" id="navAlerts" onclick="switchPage('alerts',3)">🔔 การแจ้งเตือน/Notifications <span class="alert-badge" id="alertBadgeCount">4</span></div>
+  <div class="nav-tab" id="navHistory" onclick="switchPage('insthistory',10)">🗂 ประวัติเครื่องมือ/Instrument History</div>
   <!-- ตั้งค่า dropdown -->
   <div class="nav-tab" style="position:relative;" onclick="toggleNavDropdown('settingsNavDD')">⚙️ ตั้งค่า/Settings ▾
     <div id="settingsNavDD" class="nav-dropdown" style="display:none;">
@@ -3559,8 +3559,34 @@ function switchPage(id, idx){
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   const pageEl = document.getElementById('page-'+id);
   if(pageEl) pageEl.classList.add('active');
-  const tabs = document.querySelectorAll('.nav-tab');
-  if(tabs[idx]) tabs[idx].classList.add('active');
+  // Highlight ถูกแท็บ — ใช้ data-page แทน index
+  const PAGE_TO_NAV={
+    'dashboard':'navDashboard',
+    'report':'navReport',
+    'import':'importTab',
+    'calreq':'navCalReq',
+    'today':'navToday',
+    'insthistory':'navHistory',
+    'instruments':'navInstruments',
+    'alerts':'navAlerts',
+  };
+  const navId=PAGE_TO_NAV[id];
+  if(navId){
+    const navEl=document.getElementById(navId);
+    if(navEl) navEl.classList.add('active');
+  } else {
+    // หาจาก onclick attribute
+    document.querySelectorAll('.nav-tab').forEach(t=>{
+      const oc=t.getAttribute('onclick')||'';
+      if(oc.includes("'"+id+"'") && !t.querySelector('.nav-dropdown')) t.classList.add('active');
+    });
+  }
+  // highlight dropdown parent ถ้าเลือก sub-item
+  const ddParentMap={'settings':'settingsNavDD','users':'settingsNavDD','manual':'manualNavDD','userguide':'manualNavDD'};
+  if(ddParentMap[id]){
+    const ddEl=document.getElementById(ddParentMap[id]);
+    if(ddEl && ddEl.parentElement) ddEl.parentElement.classList.add('active');
+  }
 
   if(id==='import')     refreshImportPageStatus();
   if(id==='dashboard')  refreshDashboard();

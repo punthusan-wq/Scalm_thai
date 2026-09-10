@@ -1196,16 +1196,20 @@
   </div>
 
   <div class="grid-3">
-    <!-- Timeline -->
+    <!-- 12-Month Workload Matrix -->
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title">📋 ลำดับการสอบเทียบวันนี้/Today's Calibration Queue</div>
-        <button class="btn btn-primary btn-sm" onclick="switchPage('today',1)">ดูทั้งหมด →</button>
+        <div class="panel-title">📊 ปริมาณงาน 12 เดือนข้างหน้า · แยกตามประเภท</div>
       </div>
-      <div class="panel-body" style="padding:16px;">
-        <div class="timeline" id="dashTimeline">
+      <div class="panel-body" style="padding:12px;">
+        <div style="display:flex;gap:4px;margin-bottom:10px;">
+          <button class="btn btn-sm" id="wlTabDue" onclick="switchWorkloadTab('due')" style="font-size:11px;">ตามเดือนที่ครบกำหนด</button>
+          <button class="btn btn-outline btn-sm" id="wlTabStart" onclick="switchWorkloadTab('start')" style="font-size:11px;">ตามเดือนที่ต้องเริ่มงาน</button>
+        </div>
+        <div style="overflow-x:auto;" id="workloadMatrixWrap">
           <div style="text-align:center;color:var(--text-muted);padding:12px;font-size:12px;">ยังไม่มีข้อมูล</div>
         </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">เดือนที่ต้องเริ่มออก RS คำนวณจากวันครบกำหนดลบ Lead time ของแต่ละกลุ่ม ช่องสีเข้มคือเดือนที่งานกระจุกตัว ควรกระจายงานล่วงหน้า</div>
       </div>
     </div>
 
@@ -3549,6 +3553,103 @@ function switchPage(id, idx){
   if(id==='settings')   { refreshSettingsDbInfo(); renderCompetencyMatrix(); renderSOPLibrary(); renderRiskMatrix(); renderStorageGauge(); }
 
 // ════════════════════════════════════════════════════════════
+// 12-MONTH WORKLOAD MATRIX — ปริมาณงานแยกตามประเภท
+// ════════════════════════════════════════════════════════════
+let workloadTabMode='due'; // 'due' or 'start'
+const LEAD_TIME_DAYS={torque:14, dimension:21, electrical:14, force:14, pressure:14, weight:21, mass:30};
+
+function switchWorkloadTab(mode){
+  workloadTabMode=mode;
+  const dueBtn=document.getElementById('wlTabDue'); if(dueBtn) dueBtn.className=mode==='due'?'btn btn-sm':'btn btn-outline btn-sm';
+  const startBtn=document.getElementById('wlTabStart'); if(startBtn) startBtn.className=mode==='start'?'btn btn-sm':'btn btn-outline btn-sm';
+  renderWorkloadMatrix();
+}
+
+function getLeadTimeDays(type){
+  const t=(type||'').toLowerCase();
+  for(const k in LEAD_TIME_DAYS) if(t.includes(k)) return LEAD_TIME_DAYS[k];
+  return 14;
+}
+
+function renderWorkloadMatrix(){
+  const wrap=document.getElementById('workloadMatrixWrap'); if(!wrap) return;
+  const db=getDB();
+  if(db.length===0){ wrap.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:12px;font-size:12px;">ยังไม่มีข้อมูล</div>'; return; }
+
+  const today=new Date(); today.setHours(0,0,0,0);
+  const types=getInstrumentTypes();
+
+  const months=[];
+  for(let i=0;i<12;i++){
+    const d=new Date(today.getFullYear(), today.getMonth()+i, 1);
+    const mLabel=d.toLocaleDateString('th-TH',{month:'short'}).replace('.','');
+    const yLabel=String((d.getFullYear()+543)%100);
+    months.push({date:d, mLabel, yLabel, month:d.getMonth(), year:d.getFullYear()});
+  }
+
+  const matrix={};
+  types.forEach(t=>{ matrix[t]={overdue:0, months:new Array(12).fill(0)}; });
+
+  db.forEach(row=>{
+    const st=computeStatus(row);
+    if(isInactiveStatus(st)) return;
+    const t=row.type;
+    if(!t||!matrix[t]) return;
+    if(!row.nextCal) return;
+    const next=parseThaiDate(row.nextCal);
+    if(!next) return;
+    if(next<today){ matrix[t].overdue++; return; }
+
+    let targetDate=new Date(next);
+    if(workloadTabMode==='start'){
+      const lead=getLeadTimeDays(t);
+      targetDate=new Date(next.getTime()-lead*86400000);
+      if(targetDate<today) targetDate=today;
+    }
+    for(let i=0;i<12;i++){
+      const mEnd=new Date(months[i].date.getFullYear(), months[i].date.getMonth()+1, 0);
+      if(targetDate>=months[i].date && targetDate<=mEnd){ matrix[t].months[i]++; break; }
+    }
+  });
+
+  const maxCount=Math.max(...types.flatMap(t=>matrix[t].months),1);
+  let html='<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr>';
+  html+='<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);min-width:80px;font-weight:500;color:var(--text-secondary);">กลุ่ม</th>';
+  html+='<th style="text-align:center;padding:6px 4px;border-bottom:1px solid var(--border);min-width:36px;font-weight:700;color:var(--accent-red);">ค้าง</th>';
+  months.forEach((m,i)=>{
+    const isCur=i===0;
+    html+=`<th style="text-align:center;padding:4px 2px;border-bottom:1px solid var(--border);min-width:36px;font-size:10px;${isCur?'border:2px solid var(--accent-yellow);border-radius:4px;':''}">${m.mLabel}<br><span style="font-size:9px;color:var(--text-muted);">${m.yLabel}</span></th>`;
+  });
+  html+='</tr></thead><tbody>';
+
+  let totalOverdue=0;
+  const totalMonths=new Array(12).fill(0);
+
+  types.forEach(t=>{
+    const row=matrix[t];
+    if(row.overdue===0&&row.months.every(v=>v===0)) return;
+    totalOverdue+=row.overdue;
+    html+=`<tr><td style="padding:6px 8px;font-weight:500;color:var(--text-primary);border-bottom:1px solid var(--border);">${escHtml(t)}</td>`;
+    html+=`<td style="text-align:center;padding:4px;border-bottom:1px solid var(--border);${row.overdue>0?'background:rgba(229,57,53,0.3);color:#FF8A80;font-weight:700;border-radius:4px;':'color:var(--text-muted);'}">${row.overdue||'·'}</td>`;
+    row.months.forEach((v,i)=>{
+      totalMonths[i]+=v;
+      const intensity=v/maxCount;
+      const bg=v===0?'':'rgba(0,176,255,'+(0.15+intensity*0.55).toFixed(2)+')';
+      const fw=intensity>0.6?'700':'400';
+      const color=v===0?'var(--text-muted)':intensity>0.6?'#fff':'var(--text-primary)';
+      html+=`<td style="text-align:center;padding:4px;border-bottom:1px solid var(--border);background:${bg};color:${color};font-weight:${fw};border-radius:3px;">${v||'·'}</td>`;
+    });
+    html+='</tr>';
+  });
+
+  html+='<tr style="border-top:2px solid var(--border-strong);"><td style="padding:6px 8px;font-size:10px;color:var(--text-muted);">รวม</td>';
+  html+=`<td style="text-align:center;padding:4px;font-size:10px;color:var(--text-muted);">${totalOverdue||'·'}</td>`;
+  totalMonths.forEach(v=>{ html+=`<td style="text-align:center;padding:4px;font-size:10px;color:var(--text-muted);">${v||'·'}</td>`; });
+  html+='</tr></tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════════
 // STORAGE GAUGE — แสดงพื้นที่ localStorage ที่ใช้ไป
 // ════════════════════════════════════════════════════════════
 function renderStorageGauge(){
@@ -3901,6 +4002,7 @@ function refreshDashboard(){
   renderTodayPage(db);
   renderHistoryAnalytics();
   refreshDashboardGauges(db);
+  renderWorkloadMatrix();
 }
 function setKPI(id,val,sub){
   const el=document.getElementById(id);
@@ -7968,7 +8070,7 @@ function refreshPaFlowStatus(){
   const url=getPaFlowUrl();
   const input=document.getElementById('paFlowUrl');
   if(input && !input.value) input.value=url;
-  el.textContent = url ? '✅ ตั้งค่าแล้ว — เมื่อกด "ส่งคำขอนัดหมาย" ที่หน้าเครื่องมือวัด ระบบจะยิง POST ไปยัง Flow นี้' : 'ยังไม่ได้ตั้งค่า — วาง URL จาก Power Automate trigger "When a HTTP request is received"';
+  el.textContent = url ? '✅ ตั้งค่าแล้ว — ระบบจะยิง POST ไปยัง Flow นี้เมื่อมีการแจ้งเตือนอัตโนมัติ' : 'ยังไม่ได้ตั้งค่า — วาง URL จาก Power Automate trigger "When a HTTP request is received"';
 }
 // ── QR Site URL Settings ──
 function saveScalmSiteUrl(){

@@ -5257,7 +5257,7 @@ function renderCalReqTable(){
     <td>${r.pickedUpBy?`${escHtml(r.pickedUpBy)}<br><span style="font-size:10px;color:var(--text-muted);">${escHtml(r.pickupDate)}</span>`:'–'}</td>
     <td>${r.adjustmentPermission==='Yes'?'<span class="badge badge-green">Yes</span>':r.adjustmentPermission==='No'?'<span class="badge badge-red">No</span>':'–'}</td>
     <td>${formatReason(r)}</td>
-    <td>${CALREQ_STATUS_LABEL[r.status]||escHtml(r.status)}${r.slaBreached?` <span class="badge badge-red">⚠ SLA</span>`:''}</td>
+    <td>${CALREQ_STATUS_LABEL[r.status]||escHtml(r.status)}${r.slaBreached?` <span class="badge badge-red" title="ค้าง ${r.slaEscalationLevel>=3?'Escalate ถึงหัวหน้า':r.slaEscalationLevel>=2?'เตือนรอบ 2':'เตือนรอบ 1'}">⚠ SLA${r.slaEscalationLevel>=2?' ×'+r.slaEscalationLevel:''}</span>`:''}</td>
     <td>${actionBtns}</td>
   </tr>`;}).join('');
 }
@@ -5574,15 +5574,101 @@ function checkSlaEscalations(){
     const changedDate=new Date(r.statusChangedAt); changedDate.setHours(0,0,0,0);
     const daysStuck=Math.floor((today-changedDate)/86400000);
     const breached=daysStuck>=thresholdDays;
+
     if(breached && !r.slaBreached){
-      r.slaBreached=true; changed=true;
-      sendCalReqEmail(getRoleEmails('admin'), `[SCALM] ⚠ ค้างเกิน SLA — กรุณาติดตาม ${r.instrumentId}`,
+      r.slaBreached=true;
+      r.slaEscalationLevel=1;
+      changed=true;
+      // ── Tier 1: ส่งไปหาคนที่ต้องดำเนินการจริง ──
+      const recipients=getSlaRecipients(r, 1);
+      sendCalReqEmail(recipients, `[SCALM] ⚠ ค้างเกิน SLA — กรุณาดำเนินการ ${r.instrumentId}`,
         buildSlaFollowUpMessage(r, daysStuck, thresholdDays));
+    } else if(breached && r.slaBreached){
+      // ── Tier 2: ค้างนานขึ้น → escalate ──
+      const prevLevel=r.slaEscalationLevel||1;
+      let newLevel=prevLevel;
+      if(daysStuck >= thresholdDays*3 && prevLevel<3) newLevel=3;
+      else if(daysStuck >= thresholdDays*2 && prevLevel<2) newLevel=2;
+
+      if(newLevel>prevLevel){
+        r.slaEscalationLevel=newLevel;
+        changed=true;
+        const recipients=getSlaRecipients(r, newLevel);
+        const levelLabel=newLevel===2?'[เตือนรอบ 2]':'[เตือนรอบ 3 — Escalate]';
+        sendCalReqEmail(recipients, `[SCALM] ${levelLabel} ⚠ ค้างเกิน SLA ${daysStuck} วัน — ${r.instrumentId}`,
+          buildSlaFollowUpMessage(r, daysStuck, thresholdDays) + `\n\n⚠ นี่คือการเตือนรอบที่ ${newLevel} — คำขอค้างมาแล้ว ${daysStuck} วัน`);
+      }
     } else if(!breached && r.slaBreached){
-      r.slaBreached=false; changed=true;
+      r.slaBreached=false;
+      r.slaEscalationLevel=0;
+      changed=true;
     }
   });
   if(changed) saveCalRequests(list);
+}
+
+// ════════════════════════════════════════════════════════════
+// SLA RECIPIENTS — ส่งอีเมลไปหาคนที่ถูกต้องตามสถานะ + ระดับ escalation
+// ════════════════════════════════════════════════════════════
+function getSlaRecipients(r, level){
+  const plannerEmails=getRoleEmails('admin');
+  const managerEmails=getRoleEmails('manager');
+
+  if(r.status==='pending_owner'){
+    // ค้างที่ Owner ไม่ยอมรับ
+    const ownerEmails=getOwnerEmailsForInstrument(r.instrumentId);
+    if(ownerEmails.length===0) return plannerEmails; // fallback ถ้าไม่มี email Owner
+    if(level===1) return ownerEmails;                                    // รอบ 1: Owner อย่างเดียว
+    if(level===2) return [...new Set([...ownerEmails, ...plannerEmails])]; // รอบ 2: Owner + Planner
+    return [...new Set([...ownerEmails, ...plannerEmails, ...managerEmails])]; // รอบ 3: Owner + Planner + หัวหน้า
+  }
+
+  if(r.status==='pending_tech'){
+    // ค้างที่ AWM ไม่ตอบ
+    const awmEmails=getAwmEmailForRequest(r);
+    if(awmEmails.length===0) return plannerEmails;
+    if(level===1) return awmEmails;                                      // รอบ 1: AWM อย่างเดียว
+    return [...new Set([...awmEmails, ...plannerEmails])];                // รอบ 2+: AWM + Planner
+  }
+
+  if(r.status==='pending_planner_ack' || r.status==='pending_admin_confirm'){
+    // ค้างที่ Planner → ส่ง Planner เลย
+    if(level>=3) return [...new Set([...plannerEmails, ...managerEmails])]; // รอบ 3: + หัวหน้า
+    return plannerEmails;
+  }
+
+  return plannerEmails; // fallback
+}
+
+function getOwnerEmailsForInstrument(instrumentId){
+  const users=getUsers();
+  // หา Owner จาก ownerLab mapping หรือ instrument lab
+  const db=getDB();
+  const inst=db.find(r=>String(r.id).toUpperCase()===String(instrumentId).toUpperCase());
+  const lab=(inst?.lab||'').toLowerCase();
+  // หา users ที่เป็น owner ของ lab นี้
+  const ownerUsers=users.filter(u=>u.role==='owner' && (u.lab||'').toLowerCase()===lab && u.email);
+  if(ownerUsers.length>0) return ownerUsers.map(u=>u.email);
+  // fallback: หา owner ทุกคนที่มี email
+  const allOwners=users.filter(u=>u.role==='owner' && u.email);
+  return allOwners.map(u=>u.email);
+}
+
+function getAwmEmailForRequest(r){
+  const users=getUsers();
+  // หา AWM จาก pickedUpByUsername หรือ techRespondedBy
+  const awmUsername=r.pickedUpByUsername||r.techRespondedBy||'';
+  if(awmUsername){
+    const awm=users.find(u=>u.username===awmUsername && u.email);
+    if(awm) return [awm.email];
+  }
+  // fallback: หา tech ทุกคนที่มี email
+  const techs=users.filter(u=>u.role==='tech' && u.email);
+  return techs.map(u=>u.email);
+}
+
+function getRoleEmails(role){
+  return getUsers().filter(u=>u.role===role && u.email).map(u=>u.email);
 }
 function getSuggestedCalReqInstruments(){
   const db=getDB();

@@ -598,7 +598,11 @@
   .status-dot { width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  .nav-tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 0 24px; gap: 4px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: thin; position: sticky; top: 0; z-index: 100; }
+  .nav-tabs { display: flex; background: var(--bg-panel); border-bottom: 1px solid var(--border); padding: 0 24px; gap: 4px; overflow-x: auto; overflow-y: visible; -webkit-overflow-scrolling: touch; scrollbar-width: thin; position: sticky; top: 0; z-index: 100; }
+  .nav-dropdown { position:absolute; top:100%; left:0; min-width:220px; background:var(--bg-panel); border:1px solid var(--border); border-radius:0 0 10px 10px; box-shadow:0 8px 24px rgba(0,0,0,0.3); z-index:200; overflow:hidden; }
+  .nav-dd-item { padding:10px 16px; font-size:12px; cursor:pointer; transition:background 0.15s; color:var(--text-primary); border-bottom:1px solid var(--border); }
+  .nav-dd-item:last-child { border:none; }
+  .nav-dd-item:hover { background:var(--bg-hover); }
   .nav-tabs::-webkit-scrollbar { height: 4px; } .nav-tabs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
   .nav-tab { padding: 12px 20px; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
   .nav-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
@@ -1144,17 +1148,27 @@
 <!-- NAV -->
 <div class="nav-tabs">
   <div class="nav-tab active" id="navDashboard" onclick="switchPage('dashboard',0)">📊 แดชบอร์ด/Dashboard</div>
+  <div class="nav-tab" id="navReport" onclick="switchPage('report',4)">📈 รายงาน/Reports</div>
+  <div class="nav-tab" onclick="switchPage('import',5)" id="importTab">📥 นำเข้าข้อมูล/Import Data</div>
+  <div class="nav-tab" id="navCalReq" onclick="switchPage('calreq',8)" style="display:none;">📄 คำขอสอบเทียบ/Calibration Request</div>
   <div class="nav-tab" id="navToday" onclick="switchPage('today',1)">📋 แผนการสอบเทียบ/Calibration Schedule</div>
   <div class="nav-tab" onclick="switchPage('instruments',2)">🔧 เครื่องมือวัด/Instruments</div>
   <div class="nav-tab" onclick="switchPage('alerts',3)">🔔 การแจ้งเตือน/Notifications <span class="alert-badge" id="alertBadgeCount">4</span></div>
-  <div class="nav-tab" id="navReport" onclick="switchPage('report',4)">📈 รายงาน/Reports</div>
-  <div class="nav-tab" onclick="switchPage('import',5)" id="importTab">📥 นำเข้าข้อมูล/Import Data</div>
-  <div class="nav-tab" onclick="switchPage('users',6)" id="usersTab" style="display:none;">👥 ผู้ใช้งาน/User Management</div>
-  <div class="nav-tab" onclick="switchPage('settings',7)">⚙️ ตั้งค่า/Settings</div>
-  <div class="nav-tab" id="navCalReq" onclick="switchPage('calreq',8)" style="display:none;">📄 คำขอสอบเทียบ/Calibration Request</div>
-  <div class="nav-tab" onclick="switchPage('manual',9)">📖 คู่มือติดตั้ง/Installation Guide</div>
   <div class="nav-tab" onclick="switchPage('insthistory',10)">🗂 ประวัติเครื่องมือ/Instrument History</div>
-  <div class="nav-tab" onclick="switchPage('userguide',11)">📘 คู่มือการใช้งาน/User Guide</div>
+  <!-- ตั้งค่า dropdown -->
+  <div class="nav-tab" style="position:relative;" onclick="toggleNavDropdown('settingsNavDD')">⚙️ ตั้งค่า/Settings ▾
+    <div id="settingsNavDD" class="nav-dropdown" style="display:none;">
+      <div class="nav-dd-item" onclick="event.stopPropagation(); switchPage('settings',7); closeAllNavDD();">🔧 ตั้งค่าระบบ</div>
+      <div class="nav-dd-item" onclick="event.stopPropagation(); switchPage('users',6); closeAllNavDD();">👥 ตั้งค่าผู้ใช้</div>
+    </div>
+  </div>
+  <!-- คู่มือ dropdown -->
+  <div class="nav-tab" style="position:relative;" onclick="toggleNavDropdown('manualNavDD')">📖 คู่มือ/Guides ▾
+    <div id="manualNavDD" class="nav-dropdown" style="display:none;">
+      <div class="nav-dd-item" onclick="event.stopPropagation(); switchPage('manual',9); closeAllNavDD();">📖 คู่มือติดตั้ง/Installation Guide</div>
+      <div class="nav-dd-item" onclick="event.stopPropagation(); switchPage('userguide',11); closeAllNavDD();">📘 คู่มือการใช้งาน/User Guide</div>
+    </div>
+  </div>
 </div>
 
 <div class="main">
@@ -5835,6 +5849,22 @@ const CALREQ_PANEL_LABELS={
   'receivingDocsPanel':'📦 ใบตรวจรับที่บันทึกไว้',
   'returnDocsPanel':'📤 ใบส่งคืนที่บันทึกไว้',
 };
+
+// ── Nav dropdown toggle ──
+function toggleNavDropdown(id){
+  const dd=document.getElementById(id); if(!dd) return;
+  closeAllNavDD(id);
+  dd.style.display=dd.style.display==='none'?'block':'none';
+  if(dd.style.display==='block'){
+    setTimeout(()=>document.addEventListener('click', closeAllNavDDHandler, {once:true}), 10);
+  }
+}
+function closeAllNavDD(exceptId){
+  document.querySelectorAll('.nav-dropdown').forEach(el=>{
+    if(el.id!==exceptId) el.style.display='none';
+  });
+}
+function closeAllNavDDHandler(){ closeAllNavDD(); }
 
 function scrollToSuggestPanel(){
   const el=document.getElementById('calReqSuggestPanel');

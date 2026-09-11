@@ -8995,158 +8995,140 @@ function routeParsedSheets(sheets, format){
 function processReservationImport(sheets, resSheetMap){
   const db=getDB();
   const existingReqs=getCalRequests();
-  let totalImported=0, totalSkipped=0, totalNotFound=0, totalDuplicate=0;
+  let totalAdded=0, totalUpdated=0, totalUnchanged=0, totalNotFound=0;
   const logs=[];
-  const newReqs=[];
+  const pendingActions=[];
 
-  logs.push({cls:'log-ok',msg:`📅 ตรวจพบไฟล์ Reservation — กำลังสร้าง CalRequest จาก ${sheets.length} ชีท`});
+  logs.push({cls:'log-ok',msg:'📅 ตรวจพบไฟล์ Reservation — กำลัง Sync กับ CalRequest ('+existingReqs.length+' รายการเดิม)'});
+
+  const parseResDate=(val)=>{
+    if(!val) return '';
+    const s=String(val).trim();
+    if(!s || s==='-' || s==='ONSIDE' || /^Non/i.test(s) || /No cap/i.test(s)) return '';
+    const dotMatch=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if(dotMatch){ const [_,d,m,y]=dotMatch; return d.padStart(2,'0')+'/'+m.padStart(2,'0')+'/'+y; }
+    const isoMatch=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(isoMatch){ const [_,y,m,d]=isoMatch; return d+'/'+m+'/'+y; }
+    return s;
+  };
 
   sheets.forEach(sh=>{
     const instType=resSheetMap[sh.name.trim()];
-    if(!instType || !sh.rows || sh.rows.length===0) return;
+    if(!instType || !sh.rows || !sh.rows.length) return;
+    let shA=0, shU=0, shN=0;
 
-    // Find header row by looking for 'Equipment' key
-    const headers=Object.keys(sh.rows[0]||{});
-    // Reservation has rows as objects from sheet_to_json
-
-    let sheetImported=0;
     sh.rows.forEach((row, rowIdx)=>{
-      // Get EQ No from 'Equipment' column (or column index 2)
       const eqNo=String(row['Equipment']||row['equipment']||'').trim();
       if(!eqNo || eqNo==='Equipment' || /^(No\.?|$)/.test(eqNo)) return;
 
-      // Check if instrument exists in registry
       const inst=db.find(r=>String(r.id).trim()===eqNo);
-      if(!inst){
-        totalNotFound++;
-        if(totalNotFound<=5) logs.push({cls:'log-warn',msg:`⚠ ${sh.name} แถว ${rowIdx+2}: EQ No. "${eqNo}" ไม่อยู่ในทะเบียน — ข้าม`});
-        return;
-      }
+      if(!inst){ totalNotFound++; if(totalNotFound<=5) logs.push({cls:'log-warn',msg:'  ⚠ '+sh.name+' แถว '+(rowIdx+2)+': "'+eqNo+'" ไม่อยู่ในทะเบียน'}); return; }
 
-      // Parse dates
-      const parseResDate=(val)=>{
-        if(!val) return '';
-        const s=String(val).trim();
-        if(!s || s==='-' || s==='ONSIDE' || /^Non/i.test(s) || /No cap/i.test(s)) return '';
-        // Format: DD.MM.YYYY or ISO datetime
-        const dotMatch=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-        if(dotMatch){
-          const [_,d,m,y]=dotMatch;
-          return `${d.padStart(2,'0')}/${m.padStart(2,'0')}/${y}`;
-        }
-        // ISO datetime: 2026-01-27 00:00:00
-        const isoMatch=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if(isoMatch){
-          const [_,y,m,d]=isoMatch;
-          return `${d}/${m}/${y}`;
-        }
-        return s;
+      const f={
+        bookDate: parseResDate(row['วันที่จองคิว']),
+        appointDate: parseResDate(row['วันนัดส่งเครื่องมือ']),
+        sentDate: parseResDate(row['วันที่ส่งเครื่องมือ']),
+        calDate: parseResDate(row['วันที่จะCAL']),
+        expectedDone: parseResDate(row['วันที่คาดว่าจะเสร็จ']),
+        awm: String(row['By']||'').trim(),
+        shelf: String(row['ชั้นวาง']||'').trim(),
+        onProcess: parseResDate(row['on process']),
+        owner: String(row['Owner']||'').trim(),
+        description: String(row['Description']||'').trim(),
       };
 
-      const bookDate=parseResDate(row['วันที่จองคิว']);
-      const appointDate=parseResDate(row['วันนัดส่งเครื่องมือ']);
-      const sentDate=parseResDate(row['วันที่ส่งเครื่องมือ']);
-      const calDate=parseResDate(row['วันที่จะCAL']);
-      const expectedDone=parseResDate(row['วันที่คาดว่าจะเสร็จ']);
-      const awm=String(row['By']||'').trim();
-      const shelf=String(row['ชั้นวาง']||'').trim();
-      const onProcess=parseResDate(row['on process']);
-      const owner=String(row['Owner']||'').trim();
-      const description=String(row['Description']||'').trim();
-      const scaleRange=String(row['Scale range']||row['Scale range or Model number']||'').trim();
+      const exIdx=existingReqs.findIndex(r=>r.instrumentId===eqNo && r.sourceSheet===sh.name && r.sourceFile==='Reservation 2026');
 
-      // Check duplicate (same EQ + same bookDate)
-      const dupKey=`${eqNo}_${bookDate}`;
-      const isDup=existingReqs.some(r=>r.instrumentId===eqNo && r.createdDate===bookDate) || newReqs.some(r=>r._dupKey===dupKey);
-      if(isDup){
-        totalDuplicate++;
-        return;
+      if(exIdx>=0){
+        const ex=existingReqs[exIdx];
+        const ch=[];
+        if(f.bookDate && ex.createdDate!==f.bookDate) ch.push({n:'วันจอง',fr:ex.createdDate,to:f.bookDate});
+        if(f.appointDate && ex.appointmentDate!==f.appointDate) ch.push({n:'วันนัดส่ง',fr:ex.appointmentDate,to:f.appointDate});
+        if(f.sentDate && ex.sentDate!==f.sentDate) ch.push({n:'วันส่ง',fr:ex.sentDate,to:f.sentDate});
+        if(f.calDate && ex.pickupDate!==f.calDate) ch.push({n:'วัน Cal',fr:ex.pickupDate,to:f.calDate});
+        if(f.expectedDone && ex.expectedCompletionDate!==f.expectedDone) ch.push({n:'คาดเสร็จ',fr:ex.expectedCompletionDate,to:f.expectedDone});
+        if(f.awm && ex.pickedUpBy!==f.awm) ch.push({n:'AWM',fr:ex.pickedUpBy,to:f.awm});
+        if(f.shelf && ex.storageLocation!==f.shelf) ch.push({n:'ชั้นวาง',fr:ex.storageLocation,to:f.shelf});
+        if(f.onProcess && ex.calFinishDate!==f.onProcess) ch.push({n:'on process',fr:ex.calFinishDate,to:f.onProcess});
+        if(f.owner && ex.ownerCode!==f.owner) ch.push({n:'Owner',fr:ex.ownerCode,to:f.owner});
+
+        if(ch.length>0){ pendingActions.push({act:'update',exIdx,f,ch,eqNo,sheet:sh.name}); shU++; totalUpdated++; }
+        else { shN++; totalUnchanged++; }
+      } else {
+        const reqId='RES-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6)+'-'+rowIdx;
+        pendingActions.push({act:'add',data:{
+          id:reqId, instrumentId:eqNo, instrumentName:f.description||inst.name||'', instrumentType:instType,
+          reason:'RO', createdDate:f.bookDate||todayThaiDateLabel(), createdBy:'Reservation Import',
+          appointmentDate:f.appointDate, sentDate:f.sentDate, pickupDate:f.calDate, pickedUpBy:f.awm,
+          expectedCompletionDate:f.expectedDone, storageLocation:f.shelf, ownerCode:f.owner,
+          calFinishDate:f.onProcess||'', calResult:f.onProcess?'Pass':'',
+          sourceFile:'Reservation 2026', sourceSheet:sh.name,
+        },eqNo,sheet:sh.name});
+        shA++; totalAdded++;
       }
-
-      // Determine status
-      let status='pending';
-      if(onProcess || calDate) status='in_progress';
-
-      // Create CalRequest
-      const reqId='RES-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6)+'-'+rowIdx;
-      const calReq={
-        id: reqId,
-        _dupKey: dupKey,
-        instrumentId: eqNo,
-        instrumentName: description || inst.name || '',
-        instrumentType: instType,
-        reason: 'RO',
-        createdDate: bookDate || todayThaiDateLabel(),
-        createdBy: 'Reservation Import',
-        appointmentDate: appointDate,
-        sentDate: sentDate,
-        pickupDate: calDate,
-        pickedUpBy: awm,
-        expectedCompletionDate: expectedDone,
-        storageLocation: shelf,
-        ownerCode: owner,
-        calFinishDate: onProcess || '',
-        calResult: onProcess ? 'Pass' : '',
-        sourceFile: 'Reservation 2026',
-        sourceSheet: sh.name,
-      };
-      newReqs.push(calReq);
-      sheetImported++;
-      totalImported++;
     });
 
-    if(sheetImported>0) logs.push({cls:'log-ok',msg:`  ✅ ${sh.name} (${instType}): ${sheetImported} CalRequest`});
+    if(shA>0||shU>0) logs.push({cls:'log-ok',msg:'  ✅ '+sh.name+': เพิ่ม '+shA+' | อัพเดท '+shU+' | ไม่เปลี่ยน '+shN});
+    else if(shN>0) logs.push({cls:'log-info',msg:'  ℹ '+sh.name+': ไม่มีการเปลี่ยนแปลง ('+shN+')'});
   });
 
-  if(totalNotFound>5) logs.push({cls:'log-warn',msg:`  ⚠ ... และอีก ${totalNotFound-5} รายการที่ไม่อยู่ในทะเบียน`});
-  if(totalDuplicate>0) logs.push({cls:'log-info',msg:`  ℹ ข้าม ${totalDuplicate} รายการที่ซ้ำ (เคย import แล้ว)`});
+  if(totalNotFound>5) logs.push({cls:'log-warn',msg:'  ⚠ ... และอีก '+(totalNotFound-5)+' รายการที่ไม่อยู่ในทะเบียน'});
+  logs.push({cls:'log-info',msg:'\n📊 สรุป: เพิ่มใหม่ '+totalAdded+' | อัพเดท '+totalUpdated+' | ไม่เปลี่ยน '+totalUnchanged+' | ไม่อยู่ในทะเบียน '+totalNotFound});
 
-  logs.push({cls:'log-info',msg:`\n📊 สรุป: พร้อม import ${totalImported} CalRequest (ข้าม ${totalSkipped+totalNotFound+totalDuplicate} รายการ)`});
+  window._pendingReservationSync=pendingActions;
+  document.getElementById('statTotal').textContent=totalAdded+totalUpdated;
+  document.getElementById('statValid').textContent=totalAdded;
+  document.getElementById('statWarn').textContent=totalUpdated;
+  document.getElementById('statErr').textContent=totalNotFound;
+  document.getElementById('importLog').innerHTML=logs.map(l=>'<div class="log-line '+l.cls+'">'+escHtml(l.msg)+'</div>').join('');
 
-  // Store for confirmation
-  window._pendingReservationReqs=newReqs;
-
-  // Show results in import UI
-  document.getElementById('statTotal').textContent=totalImported;
-  document.getElementById('statValid').textContent=totalImported;
-  document.getElementById('statWarn').textContent=totalNotFound;
-  document.getElementById('statErr').textContent=totalDuplicate;
-  document.getElementById('importLog').innerHTML=logs.map(l=>`<div class="log-line ${l.cls}">${escHtml(l.msg)}</div>`).join('');
-
-  // Show special Reservation import button
   const actionsEl=document.getElementById('importActions');
   actionsEl.style.display='block';
-  actionsEl.innerHTML=`
-    <div style="padding:16px;text-align:center;">
-      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">📅 พบไฟล์ Reservation 2026 — พร้อม import ${totalImported} CalRequest</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">ข้อมูลจะถูกสร้างเป็น CalRequest ในระบบ SCALM จับคู่กับเครื่องมือในทะเบียน</div>
-      <button class="btn btn-primary" onclick="confirmReservationImport()" style="font-size:14px;padding:10px 32px;">✅ ยืนยัน import Reservation → CalRequest</button>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">ข้อมูลทะเบียนเครื่องมือไม่ถูกกระทบ — เพิ่มเฉพาะ CalRequest เท่านั้น</div>
-    </div>`;
+  const hasChanges=totalAdded>0||totalUpdated>0;
+  actionsEl.innerHTML='<div style="padding:16px;text-align:center;"><div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">📅 Sync Reservation 2026</div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">🆕 เพิ่มใหม่ <strong style="color:var(--accent-green);">'+totalAdded+'</strong> · 🔄 อัพเดท <strong style="color:var(--accent-yellow);">'+totalUpdated+'</strong> · ⏭ ไม่เปลี่ยน <strong>'+totalUnchanged+'</strong></div>'+(hasChanges?'<button class="btn btn-primary" onclick="confirmReservationImport()" style="font-size:14px;padding:10px 32px;">✅ ยืนยัน Sync</button><div style="font-size:11px;color:var(--text-muted);margin-top:8px;">ทะเบียนเครื่องมือไม่ถูกกระทบ — เพิ่ม/อัพเดทเฉพาะ CalRequest</div>':'<div style="font-size:13px;color:var(--text-muted);margin-top:8px;">✅ ข้อมูลตรงกันแล้ว ไม่มีอะไรต้องอัพเดท</div>')+'</div>';
 
-  ['importStats','importLogWrap'].forEach(id=>document.getElementById(id).style.display='block');
+  ['importStats','importLogWrap'].forEach(function(id){document.getElementById(id).style.display='block';});
   document.getElementById('parseProgress').style.display='none';
-  // Hide fields that don't apply to Reservation
-  ['previewWrap','fieldMapWrap','importSuccess'].forEach(id=>document.getElementById(id).style.display='none');
+  ['previewWrap','fieldMapWrap','importSuccess'].forEach(function(id){document.getElementById(id).style.display='none';});
 }
 
 function confirmReservationImport(){
-  const newReqs=window._pendingReservationReqs;
-  if(!newReqs||!newReqs.length){ showToast('critical','ไม่มีข้อมูลรอ import'); return; }
+  const actions=window._pendingReservationSync;
+  if(!actions||!actions.length){ showToast('critical','ไม่มีข้อมูลรอ Sync'); return; }
   const list=getCalRequests();
-  newReqs.forEach(r=>{ delete r._dupKey; list.push(r); });
+  let addCount=0, updateCount=0;
+
+  actions.forEach(function(act){
+    if(act.act==='add'){ list.push(act.data); addCount++; }
+    else if(act.act==='update'){
+      const ex=list.find(function(r){ return r.instrumentId===act.eqNo && r.sourceSheet===act.sheet && r.sourceFile==='Reservation 2026'; });
+      if(ex){
+        var f=act.f;
+        if(f.bookDate) ex.createdDate=f.bookDate;
+        if(f.appointDate) ex.appointmentDate=f.appointDate;
+        if(f.sentDate) ex.sentDate=f.sentDate;
+        if(f.calDate) ex.pickupDate=f.calDate;
+        if(f.expectedDone) ex.expectedCompletionDate=f.expectedDone;
+        if(f.awm) ex.pickedUpBy=f.awm;
+        if(f.shelf) ex.storageLocation=f.shelf;
+        if(f.onProcess){ ex.calFinishDate=f.onProcess; ex.calResult='Pass'; }
+        if(f.owner) ex.ownerCode=f.owner;
+        ex.lastSyncAt=new Date().toISOString();
+        var changeDesc=act.ch.map(function(c){ return c.n+': "' +(c.fr||'-')+'" → "'+c.to+'"'; }).join(', ');
+        logAudit(act.eqNo, 'Sync Reservation: '+changeDesc);
+        updateCount++;
+      }
+    }
+  });
+
   saveCalRequests(list);
-  logAudit('SYSTEM', `Import Reservation 2026 — สร้าง ${newReqs.length} CalRequest จากไฟล์ Reservation`);
-  window._pendingReservationReqs=null;
+  if(addCount>0) logAudit('SYSTEM', 'Sync Reservation 2026 — เพิ่มใหม่ '+addCount+' CalRequest');
+  if(updateCount>0) logAudit('SYSTEM', 'Sync Reservation 2026 — อัพเดท '+updateCount+' CalRequest');
+  window._pendingReservationSync=null;
 
-  document.getElementById('importActions').innerHTML=`
-    <div style="padding:16px;text-align:center;">
-      <div style="font-size:16px;font-weight:700;color:var(--accent-green);margin-bottom:6px;">✅ Import Reservation สำเร็จ!</div>
-      <div style="font-size:13px;color:var(--text-secondary);">สร้าง ${newReqs.length} CalRequest เรียบร้อย — ดูได้ที่หน้า "Calibration Request" และ "แผนสอบเทียบ"</div>
-    </div>`;
-
+  document.getElementById('importActions').innerHTML='<div style="padding:16px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--accent-green);margin-bottom:6px;">✅ Sync Reservation สำเร็จ!</div><div style="font-size:13px;color:var(--text-secondary);">เพิ่มใหม่ '+addCount+' · อัพเดท '+updateCount+' รายการ</div></div>';
   refreshDashboard();
-  showToast('save',`Import Reservation สำเร็จ — ${newReqs.length} CalRequest`);
+  showToast('save','Sync Reservation สำเร็จ — เพิ่ม '+addCount+' · อัพเดท '+updateCount);
 }
 function handleDragOver(e){e.preventDefault();document.getElementById('dropZone').classList.add('dragover');}
 function handleDragLeave(){document.getElementById('dropZone').classList.remove('dragover');}
